@@ -1,0 +1,22 @@
+# Describes the services offered by the RFID Jukebox integration.
+
+map_tag:
+  name: Map Tag to Playlist
+  description: Creates a new mapping between an RFID tag ID and a playlist name.
+  fields:
+    tag_id:
+      name: Tag ID
+      description: The unique identifier of the RFID tag.
+      required: true
+      selector:
+        text:
+    playlist_name:
+      name: Playlist Name
+      description: The name of the Music Assistant playlist to map.
+      required: true
+      selector:
+        text:
+
+reload_mappings:
+  name: Reload Mappings
+  description: Reloads the tag-to-playlist mappings from the YAML file.
