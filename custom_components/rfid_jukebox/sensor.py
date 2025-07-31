@@ -17,20 +17,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor platform from a config entry."""
-    # This will be used for UI-based configuration in the future.
-    pass
-
-
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: dict,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info=None,
-) -> None:
-    """Set up the sensor platform from YAML."""
-    if DOMAIN in hass.data:
-        jukebox = hass.data[DOMAIN]
-        async_add_entities([LastTagSensor(jukebox)], False)
+    jukebox = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([LastTagSensor(jukebox)])
 
 
 class LastTagSensor(SensorEntity):
@@ -51,7 +39,7 @@ class LastTagSensor(SensorEntity):
 
     def update(self):
         """Fetch new state data for the sensor.
-        
+
         This is the only method that should fetch new data for Home Assistant.
         """
         # State is pushed from the jukebox instance, so this is not needed.

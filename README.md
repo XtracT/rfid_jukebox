@@ -88,31 +88,22 @@ This keeps the `rfid_jukebox` integration focused on its primary role while givi
 You can test the entire functionality of this integration without a physical RFID reader.
 
 1.  Create an `input_text` helper in Home Assistant (e.g., `input_text.rfid_test_tag`).
-2.  In your `configuration.yaml`, set the `tag_sensor` to this helper's entity ID:
-    ```yaml
-    rfid_jukebox:
-      tag_sensor: input_text.rfid_test_tag
-      # ... your other settings
-    ```
+2.  When configuring the integration, select this `input_text` helper as the "Tag Sensor".
 3.  Add the `input_text` helper to your dashboard.
     *   **To simulate a tag scan**, type any text into the box and press Enter.
     *   **To simulate removing the tag**, you can either **clear the text box** so it's empty, or type the word `none` or `unknown`.
 
 ## ⚙️ Configuration
 
-To use this integration, add the following to your `configuration.yaml` file:
+This integration is configured via the Home Assistant UI.
 
-```yaml
-# configuration.yaml
-rfid_jukebox:
-  tag_sensor: sensor.rfid_tag_id
-  media_player: media_player.kids_room_speaker
-  mapping_file_path: "/config/rfid_mappings.yaml"
-  unmapped_tag_tts_message: "This tag is not yet mapped to a playlist." # Optional
-  tts_service: "tts.google_say" # Optional: The TTS service for announcements
-```
-
-**Note:** You do not need to create the `rfid_mappings.yaml` file yourself. The integration will automatically create it the first time you map a tag.
+1.  Go to **Settings > Devices & Services**.
+2.  Click **Add Integration** and search for **RFID Jukebox**.
+3.  Follow the on-screen instructions to configure the integration. You will need to provide:
+    *   **Tag Sensor**: The `sensor` or `input_text` entity that provides the RFID tag ID.
+    *   **Media Player**: The media player to control.
+    *   **Unmapped Tag TTS Message** (Optional): The message to announce when an unmapped tag is scanned.
+    *   **TTS Service** (Optional): The TTS service to use for announcements.
 
 ## 🎛️ Entities
 
@@ -156,9 +147,8 @@ This is the initial version described in the implementation plan above, focusing
 
 Once the core is stable, we will focus on making the integration easier to configure and monitor.
 
--   [ ] **Config Flow**: Implement a full GUI-based configuration flow in `config_flow.py`. This will guide users through setup and remove the need for manual YAML editing.
--   [ ] **Options Flow**: Allow reconfiguration (e.g., changing the media player) without deleting and re-adding the integration.
--   [ ] **Status Sensor**: Create a `sensor.rfid_jukebox_status` entity with detailed attributes (`current_playlist`, `last_scanned_tag`, `state`). This will enable rich dashboard widgets and automations. Please note this might be redundant, as home assistant has the media player gui. 
+-   [x] **Config Flow**: Implement a full GUI-based configuration flow in `config_flow.py`. This will guide users through setup and remove the need for manual YAML editing.
+-   [x] **Options Flow**: Allow reconfiguration (e.g., changing the media player) without deleting and re-adding the integration.
 
 ### Phase 3: Advanced Playback Controls
 

@@ -11,16 +11,14 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: dict,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info=None,
 ) -> None:
-    """Set up the text platform from YAML."""
-    if DOMAIN in hass.data:
-        jukebox = hass.data[DOMAIN]
-        async_add_entities([PlaylistNameText(jukebox)], False)
+    """Set up the text platform from a config entry."""
+    jukebox = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([PlaylistNameText(jukebox)])
 
 
 class PlaylistNameText(TextEntity):
