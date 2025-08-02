@@ -45,7 +45,7 @@ pn532_i2c:
     then:
       - lambda: |-
           ESP_LOGD("main", "Tag removed");
-          id(rfid_tag_uid).publish_state("");
+          id(rfid_tag_uid).publish_state("none");
 
 # Binary sensors for the physical hardware buttons.
 binary_sensor:
