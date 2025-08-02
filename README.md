@@ -160,10 +160,16 @@ This phase will introduce more interactive and powerful ways to control the musi
     -   Toggle Shuffle / Repeat
 -   [ ] **Expanded Services**: Add new services to `services.yaml` (e.g., `rfid_jukebox.set_volume`, `rfid_jukebox.next_track`) that can be used in automations or with control tags.
 
-### Phase 4: All-in-One Hardware Integration
 
-This phase will address the goal of a more "batteries-included" experience by building the hardware control logic directly into the integration, making it an optional feature for users who want a simpler setup.
 
--   [ ] **Direct Button/Sensor Configuration**: Update the Config Flow to allow users to optionally select entities for Play/Pause, Next/Previous, and Volume control.
--   [ ] **Internal Event Listeners**: The integration will listen to state changes from the configured button and sensor entities directly.
--   [ ] **Internal Service Calls**: Instead of relying on user-created automations, the integration itself will call the appropriate `media_player` services in response to hardware events.
+## ESPHome Firmware
+
+Below is a complete, working ESPHome configuration that you can use as a starting point for your own RFID jukebox. This firmware is designed to work with the `rfid_jukebox` custom integration and provides physical controls for playback.
+
+### Features
+
+*   **RFID Reader**: Uses a PN532 I2C RFID reader to scan tags.
+*   **Physical Buttons**: Provides buttons for previous track, play/pause, and next track.
+*   **Rotary Encoder**: Allows for volume control by turning the knob and toggles play/pause by pressing it.
+*   **Direct Media Player Control**: Interacts directly with a specified Home Assistant `media_player` entity.
+*   **Configurable**: The target `media_player` entity can be easily changed in one place.

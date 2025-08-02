@@ -1,0 +1,122 @@
+esphome:
+  name: rfid-jukebox
+  friendly_name: RFID Jukebox
+
+substitutions:
+  media_player_entity_id: media_player.home_assistant_voice_092fdd_media_player_2
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Core Components
+logger:
+api:
+ota:
+  platform: esphome
+
+wifi:
+  ssid: lookmanowires
+  password: "This is WiFi PassWord"
+  ap:
+    ssid: "Jukebox Fallback AP"
+    password: "password"
+
+web_server:
+captive_portal:
+
+# I2C bus for peripherals
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  id: i2c_bus_main
+
+# RFID Reader Component
+pn532_i2c:
+  i2c_id: i2c_bus_main
+  update_interval: 1s
+  on_tag:
+    then:
+      - lambda: |-
+          ESP_LOGD("main", "Found tag with UID: %s", x.c_str());
+          id(rfid_tag_uid).publish_state(x);
+  on_tag_removed:
+    then:
+      - lambda: |-
+          ESP_LOGD("main", "Tag removed");
+          id(rfid_tag_uid).publish_state("");
+
+# Binary sensors for the physical hardware buttons.
+binary_sensor:
+  - platform: gpio
+    name: "Jukebox Button Previous"
+    pin: { number: GPIO18, mode: INPUT_PULLUP, inverted: true }
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - homeassistant.action:
+          action: media_player.media_previous_track
+          data:
+            entity_id: ${media_player_entity_id}
+  - platform: gpio
+    name: "Jukebox Button Play/Pause"
+    pin: { number: GPIO19, mode: INPUT_PULLUP, inverted: true }
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - homeassistant.action:
+          action: media_player.media_play_pause
+          data: 
+            entity_id: ${media_player_entity_id}
+  - platform: gpio
+    name: "Jukebox Button Next"
+    pin: { number: GPIO23, mode: INPUT_PULLUP, inverted: true }
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - homeassistant.action:
+          action: media_player.media_next_track
+          data: 
+            entity_id: ${media_player_entity_id}
+  - platform: gpio
+    name: "Jukebox Encoder Button"
+    pin: { number: GPIO27, mode: INPUT_PULLUP, inverted: true }
+    filters:
+      - delayed_on: 50ms
+    on_press:
+      - logger.log: "Encoder button pressed, calling service."
+      - homeassistant.action:
+          action: media_player.media_play_pause
+          data: 
+            entity_id: ${media_player_entity_id}
+
+# Sensors for RFID tag and rotary encoder
+text_sensor:
+  - platform: template
+    name: "RFID Jukebox Tag"
+    id: rfid_tag_uid
+    icon: "mdi:rfid"
+
+sensor:
+  - platform: rotary_encoder
+    name: "Jukebox Volume"
+    pin_a:
+      number: GPIO25
+      inverted: true
+    pin_b:
+      number: GPIO26
+      inverted: true
+    resolution: 2
+    on_clockwise:
+      - logger.log: "Rotary clockwise, calling volume up."
+      - homeassistant.action:
+          action: media_player.volume_up
+          data:
+            entity_id: ${media_player_entity_id}
+    on_anticlockwise:
+      - logger.log: "Rotary anticlockwise, calling volume down."
+      - homeassistant.action:
+          action: media_player.volume_down
+          data: 
+            entity_id: ${media_player_entity_id}
