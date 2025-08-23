@@ -1,32 +1,39 @@
 # 🎵 RFID Jukebox: A Home Assistant + Music Assistant tag based jukebox! 
 
-The goal is to create a simple, robust, and kid-friendly way to play music using physical RFID tags. This project is inspired by the desire for a less complex alternative to solutions like Phoniebox, leveraging the power and flexibility of Home Assistant, ESPHome or squeezelite-esp32, and Music Assistant. In order to achieve that, this repository provides: 
+The goal is to create a simple, robust, and kid-friendly way to play music using physical RFID tags. This project is inspired by the desire for a less complex alternative to solutions like Phoniebox, leveraging the power and flexibility of Home Assistant, ESPHome,squeezelite-esp32, and Music Assistant. In order to achieve that, this repository provides: 
 
-- A Bill of Materials and tutorial on how to make a toddler-targeted jukebox 
+- A Bill of Materials and tutorial on how to make a toddler-targeted jukebox. 
 - An EspHome yaml file to add RFID reader, buttons and knob functionality. 
 - A custom integration for Home Assistant that connects the ESP32 connected RFID reader to the required media player. 
 
-Therefore, the main contribution is the integration. There are many different ways to achieve this setup though, so contributions are welcome! 
+Therefore, the main contribution is the integration. There are many different ways to achieve this setup though, so other contributions are welcome! 
 
 This is the list of used hardware:
 - 1 [Louder-ESP32S3 by Sonocotta](https://www.tindie.com/products/sonocotta/louder-esp32s3/)
 - 2 pcs [AIYIMA speakers](https://www.aliexpress.com/item/1005003690882286.html?spm=a2g0o.order_list.order_list_main.57.645a5c5fcSl91U)
-- 1 PN532 
+- 1 PN532
 - 1 [keyes 040 knob](https://www.amazon.de/KEYESTUDIO-Encoder-Development-Arduino-Raspberry/dp/B085944A4G)
 - 2 pcs cherry mx style switches, any style will do 
-- any esp32 dev board
-- an optional type Cpower bank
-- The enclosure is 3D printed, you will be able to find the files and BOM [here](https://www.pending.com)
+- "any" esp32 dev board
+- an optional type C power bank
+- The enclosure is 3D printed, you will be able to find the files [here](https://www.pending.com)
+- Assortment of M3x4mm threaded inserts, M3x6mm screws, M3x8mm screws, M3x100mm screws (check aliexpress)
+- Maybe M2.5x3mm inserts
+- Type C cables
+- 1 [Type C through panel](https://de.aliexpress.com/item/1005008176772218.html?spm=a2g0o.order_list.order_list_main.142.5a0f5c5fB82eEa&gatewayAdapt=glo2deu)
 
+The Louder-ESP32S3 is powered via 5V3A, which gives more than enough volume. The Loud-ESP32S3 would also work, but then the amplifier would be the limit and the possibilities to upgrade or reuse later in a more powerful setup are limited. For the difference in cost, I would recommend to go to the Louder. 
 
 ## Quick go through
 
-1. Flash squeezelite-ESP32 to the Louder-ESP32S3
-2. Connect it to Music Assistant (you need to point it to it's ip, do not add the port)
-3. Connect the PN532 (or any other RFID reader supported by EspHome) to the ESP32 board, and the optional knob and buttons. 
-4. Flash the ESP32 using EspHome and the provided yaml (modify as required). 
+1. Flash squeezelite-ESP32 to the Louder-ESP32S3 (you could also use ESPHome, check Sonocotta's repository)
+2. Connect it to Music Assistant (you need to point it to Music Assistant's IP, do not add any port)
+3. Wire the PN532 (or any other RFID reader supported by EspHome) to the ESP32 board, and the optional knob and buttons. 
+4. Flash the ESP32 using EspHome and the provided yaml (modify as/if required). 
 5. Add the integration to home assistant, that makes everything work together. 
 6. Map tags to Music Assistant playlists, enjoy your toddler friendly jukebox! 
+7. Limit the max volume using the "Target level for volume normalization" setting in Music Assistant. 
+8. 
 
 ## 🎯 Core Features of the Home Assistant Integrations. 
  
@@ -88,7 +95,6 @@ Below is a complete, working ESPHome configuration that you can use as a startin
 *   **Rotary Encoder**: Allows for volume control by turning the knob and toggles play/pause by pressing it.
 *   **Direct Media Player Control**: Interacts directly with a specified Home Assistant `media_player` entity.
 *   **Configurable**: The target `media_player` entity can be easily changed in one place.
-*   
 
 ### Alternative
 
@@ -101,11 +107,9 @@ However, it could lead to a cleaner hardware setup and **maybe** a faster start-
 
 ## Out of scope  for the project
 
-For now: 
+At least, for now: 
 -   **Control Tags**: Special tags for actions (Volume, skip, toggle). 
 -   **Different RFID tag behavior**: Keeping the tag readable is the easiest, most intuitive and simplest to implement way of interacting with the jukebox. 
 -   
 
-
 Disclaimer: Mostly vibe coded. 
-
