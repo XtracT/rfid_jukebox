@@ -9,8 +9,6 @@ from .const import (
     DOMAIN,
     CONF_TAG_SENSOR,
     CONF_MEDIA_PLAYER,
-    CONF_UNMAPPED_TAG_TTS_MESSAGE,
-    CONF_TTS_SERVICE,
     DEFAULT_MAPPING_FILE_PATH,
 )
 
@@ -83,9 +81,6 @@ class RFIDJukebox:
         self.hass.services.async_register(
             DOMAIN, "map_tag", self.async_map_tag_service
         )
-        self.hass.services.async_register(
-            DOMAIN, "reload_mappings", self.async_reload_mappings_service
-        )
 
     async def async_tag_changed_handler(self, event_data):
         """Handle state changes for the RFID tag sensor."""
@@ -116,7 +111,7 @@ class RFIDJukebox:
                 if new_tag in self.mappings:
                     await self.async_start_new_playlist(self.mappings[new_tag])
                 else:
-                    await self.async_announce_unmapped_tag()
+                    _LOGGER.warning("Unmapped tag scanned: %s", new_tag)
         # Tag is removed
         else:
             if self.current_tag:
@@ -166,36 +161,6 @@ class RFIDJukebox:
             blocking=True,
         )
 
-    async def async_announce_unmapped_tag(self):
-        """Announce that the scanned tag is not mapped."""
-        message = self.config.get(
-            CONF_UNMAPPED_TAG_TTS_MESSAGE, "This tag is not mapped."
-        )
-        tts_service = self.config.get(CONF_TTS_SERVICE)
-
-        if not tts_service:
-            _LOGGER.warning(
-                "Unmapped tag scanned: %s. No TTS service configured.", self.last_tag
-            )
-            return
-
-        _LOGGER.warning(
-            "Unmapped tag scanned: %s. Announcing via %s: %s",
-            self.last_tag,
-            tts_service,
-            message,
-        )
-        domain, service = tts_service.split(".")
-        await self.hass.services.async_call(
-            domain,
-            service,
-            {
-                "entity_id": self.config[CONF_MEDIA_PLAYER],
-                "message": message,
-            },
-            blocking=True,
-        )
-
     async def async_map_tag(self, tag_id: str, playlist_name: str):
         """Map a tag to a playlist and save it."""
         from .helpers import save_mappings
@@ -222,15 +187,6 @@ class RFIDJukebox:
         playlist_name = service_call.data.get("playlist_name")
         await self.async_map_tag(tag_id, playlist_name)
 
-    async def async_reload_mappings_service(self, service_call):
-        """Handle the reload_mappings service call."""
-        from .helpers import load_mappings
-
-        _LOGGER.info("Reloading mappings from file")
-        mapping_file = self.hass.config.path(DEFAULT_MAPPING_FILE_PATH)
-        self.mappings = await self.hass.async_add_executor_job(
-            load_mappings, self.hass, mapping_file
-        )
 
     async def async_map_tag_from_ui(self):
         """Map the last scanned tag to the playlist name from the text input."""

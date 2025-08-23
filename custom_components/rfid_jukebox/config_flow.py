@@ -11,9 +11,6 @@ from .const import (
     DOMAIN,
     CONF_TAG_SENSOR,
     CONF_MEDIA_PLAYER,
-    CONF_UNMAPPED_TAG_TTS_MESSAGE,
-    CONF_TTS_SERVICE,
-    DEFAULT_UNMAPPED_TAG_TTS_MESSAGE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,13 +37,6 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Required(CONF_MEDIA_PLAYER): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="media_player"),
-                    ),
-                    vol.Optional(
-                        CONF_UNMAPPED_TAG_TTS_MESSAGE,
-                        default=DEFAULT_UNMAPPED_TAG_TTS_MESSAGE,
-                    ): str,
-                    vol.Optional(CONF_TTS_SERVICE): selector.EntitySelector(
-                        selector.EntitySelectorConfig(domain="tts"),
                     ),
                 }
             ),
@@ -88,18 +78,6 @@ class RFIDJukeboxOptionsFlowHandler(config_entries.OptionsFlow):
                         default=self.config_entry.data.get(CONF_MEDIA_PLAYER),
                     ): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="media_player"),
-                    ),
-                    vol.Optional(
-                        CONF_UNMAPPED_TAG_TTS_MESSAGE,
-                        default=self.config_entry.data.get(
-                            CONF_UNMAPPED_TAG_TTS_MESSAGE, DEFAULT_UNMAPPED_TAG_TTS_MESSAGE
-                        ),
-                    ): str,
-                    vol.Optional(
-                        CONF_TTS_SERVICE,
-                        default=self.config_entry.data.get(CONF_TTS_SERVICE),
-                    ): selector.EntitySelector(
-                        selector.EntitySelectorConfig(domain="tts"),
                     ),
                 }
             ),

@@ -16,7 +16,3 @@ map_tag:
       required: true
       selector:
         text:
-
-reload_mappings:
-  name: Reload Mappings
-  description: Reloads the tag-to-playlist mappings from the YAML file.
