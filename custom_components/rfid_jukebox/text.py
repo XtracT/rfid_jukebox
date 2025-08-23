@@ -34,7 +34,12 @@ class PlaylistNameText(TextEntity):
         self._attr_native_value = self._jukebox.playlist_to_map
 
     async def async_set_value(self, value: str) -> None:
-        """Change the value."""
+        """Change the value of the text entity."""
         self._jukebox.playlist_to_map = value
+        self._attr_native_value = value
+        self.async_write_ha_state()
+
+    def update_value(self, value: str):
+        """Update the value of the text entity from the jukebox."""
         self._attr_native_value = value
         self.async_write_ha_state()

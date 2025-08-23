@@ -34,4 +34,6 @@ class MapTagButton(ButtonEntity):
     async def async_press(self) -> None:
         """Handle the button press."""
         _LOGGER.debug("Map tag button pressed")
-        await self._jukebox.async_map_tag_from_ui()
+        playlist_to_map = self._jukebox.playlist_to_map
+        tag_id = self._jukebox.last_tag
+        await self._jukebox.async_map_tag(tag_id, playlist_to_map)

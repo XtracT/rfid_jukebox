@@ -24,7 +24,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await jukebox.async_setup()
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "text", "button"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["text", "button"])
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
@@ -34,7 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, ["sensor", "text", "button"]
+        entry, ["text", "button"]
     )
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -58,7 +58,6 @@ class RFIDJukebox:
         self.mappings = {}
         self.last_tag = None
         self.current_tag = None
-        self.sensor = None
         self.text_entity = None
         self.playlist_to_map = ""
         self.last_played_playlist_name = None
@@ -102,8 +101,11 @@ class RFIDJukebox:
             # Update the 'last_tag' sensor for the UI
             if self.last_tag != new_tag:
                 self.last_tag = new_tag
-                if self.sensor:
-                    self.sensor.async_schedule_update_ha_state(True)
+                if self.text_entity:
+                    if new_tag in self.mappings:
+                        self.text_entity.update_value(self.mappings[new_tag])
+                    else:
+                        self.text_entity.update_value(new_tag)
 
             # If it's the same tag that was just playing, resume.
             if self.current_tag == new_tag:
@@ -232,13 +234,10 @@ class RFIDJukebox:
 
     async def async_map_tag_from_ui(self):
         """Map the last scanned tag to the playlist name from the text input."""
-        last_tag_entity_id = f"sensor.{DOMAIN}_last_tag"
         playlist_text_entity_id = f"text.{DOMAIN}_playlist_to_map"
-
-        last_tag_state = self.hass.states.get(last_tag_entity_id)
         playlist_text_state = self.hass.states.get(playlist_text_entity_id)
 
-        tag_id = last_tag_state.state if last_tag_state else None
+        tag_id = self.last_tag
         playlist_name = playlist_text_state.state if playlist_text_state else None
 
         await self.async_map_tag(tag_id, playlist_name)
