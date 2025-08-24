@@ -1,4 +1,3 @@
-
 esphome:
   name: rfid-jukebox
   friendly_name: RFID Jukebox Controller
@@ -15,7 +14,7 @@ esphome:
                 state: "none"
 
 substitutions:
-  media_player_entity_id: media_player.pau_phonie
+  media_player_entity_id: media_player.jukebox_pau_louder_mediaplayer
   volume_step_small: "2"     # % per tick (slow)
   volume_step_fast: "2.5"      # % per tick (fast spin)
   accel_threshold_ms: "120"  # below this between ticks = fast
@@ -23,13 +22,13 @@ substitutions:
 esp32:
   board: esp32dev
   framework:
-    type: esp-idf
+    type: arduino
     
 logger:
   level: INFO  # set to WARN in production
 
 api:
-# encryption:
+ # encryption:
 #   key: !secret api_key
 
 ota:
@@ -93,6 +92,7 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+
 pn532_i2c:
   i2c_id: i2c_bus_main
   update_interval: 300ms
@@ -144,16 +144,12 @@ binary_sensor:
           - OFF for at least 50ms
         then:
           - homeassistant.action:
-              action: media_player.media_previous_track
-              data: 
-                entity_id: ${media_player_entity_id}
+              action: rfid_jukebox.previous_track
       - timing:
           - ON for at least 600ms
         then:
           - homeassistant.action:
-              action: media_player.media_stop
-              data: 
-                entity_id: ${media_player_entity_id}
+              action: rfid_jukebox.stop
 
   - platform: gpio
     name: "Jukebox Button Play/Pause"
@@ -171,9 +167,7 @@ binary_sensor:
           - ON for at least 700ms
         then:
           - homeassistant.action:
-              action: media_player.media_stop
-              data: 
-                entity_id: ${media_player_entity_id} 
+              action: rfid_jukebox.stop
 
   - platform: gpio
     name: "Jukebox Button Next"
@@ -184,9 +178,7 @@ binary_sensor:
           - OFF for at least 50ms
         then:
           - homeassistant.action:
-              action: media_player.media_next_track
-              data: 
-                entity_id: ${media_player_entity_id} 
+              action: rfid_jukebox.next_track
 
       - timing:
           - ON for at least 600ms
@@ -260,6 +252,7 @@ sensor:
             if (x >= 0.0f && x <= 1.0f) {
               id(current_volume_pct) = x * 100.0f;
             }
+
 
 script:
   - id: set_target_volume

@@ -18,24 +18,23 @@ async def async_setup_entry(
 ) -> None:
     """Set up the text platform from a config entry."""
     jukebox = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([PlaylistNameText(jukebox)])
+    async_add_entities([FolderNameText(jukebox)])
 
 
-class PlaylistNameText(TextEntity):
-    """Representation of a Text entity for entering a playlist name."""
+class FolderNameText(TextEntity):
+    """Representation of a Text entity for entering a folder name."""
 
     def __init__(self, jukebox):
         """Initialize the text entity."""
         self._jukebox = jukebox
-        self._jukebox.text_entity = self  # Register entity with the jukebox instance
-        self._attr_name = "RFID Jukebox Playlist to Map"
-        self._attr_unique_id = f"{DOMAIN}_playlist_to_map"
-        self._attr_icon = "mdi:playlist-edit"
-        self._attr_native_value = self._jukebox.playlist_to_map
+        self._jukebox.text_entity = self
+        self._attr_name = "RFID Jukebox Folder to Map"
+        self._attr_unique_id = f"{DOMAIN}_folder_to_map"
+        self._attr_icon = "mdi:folder-music"
+        self._attr_native_value = ""
 
     async def async_set_value(self, value: str) -> None:
         """Change the value of the text entity."""
-        self._jukebox.playlist_to_map = value
         self._attr_native_value = value
         self.async_write_ha_state()
 

@@ -11,6 +11,8 @@ from .const import (
     DOMAIN,
     CONF_TAG_SENSOR,
     CONF_MEDIA_PLAYER,
+    CONF_MUSIC_DIR,
+    DEFAULT_MUSIC_DIR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,8 +38,9 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         selector.EntitySelectorConfig(domain=["sensor", "input_text"]),
                     ),
                     vol.Required(CONF_MEDIA_PLAYER): selector.EntitySelector(
-                        selector.EntitySelectorConfig(domain="media_player"),
+                        selector.EntitySelectorConfig(domain="media_player", integration="esphome"),
                     ),
+                    vol.Required(CONF_MUSIC_DIR, default=DEFAULT_MUSIC_DIR): str,
                 }
             ),
             errors=errors,
@@ -77,8 +80,12 @@ class RFIDJukeboxOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_MEDIA_PLAYER,
                         default=self.config_entry.data.get(CONF_MEDIA_PLAYER),
                     ): selector.EntitySelector(
-                        selector.EntitySelectorConfig(domain="media_player"),
+                        selector.EntitySelectorConfig(domain="media_player", integration="esphome"),
                     ),
+                    vol.Required(
+                        CONF_MUSIC_DIR,
+                        default=self.config_entry.data.get(CONF_MUSIC_DIR),
+                    ): str,
                 }
             ),
             errors=errors,
