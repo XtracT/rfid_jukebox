@@ -14,7 +14,7 @@ esphome:
                 state: "none"
 
 substitutions:
-  media_player_entity_id: media_player.jukebox_pau_louder_mediaplayer
+  media_player_entity_id: media_player.rfid_jukebox
   volume_step_small: "2"     # % per tick (slow)
   volume_step_fast: "2.5"      # % per tick (fast spin)
   accel_threshold_ms: "120"  # below this between ticks = fast
@@ -144,12 +144,16 @@ binary_sensor:
           - OFF for at least 50ms
         then:
           - homeassistant.action:
-              action: rfid_jukebox.previous_track
+              action: media_player.media_previous_track
+              data:
+                entity_id: ${media_player_entity_id}
       - timing:
           - ON for at least 600ms
         then:
           - homeassistant.action:
-              action: rfid_jukebox.stop
+              action: media_player.media_stop
+              data:
+                entity_id: ${media_player_entity_id}
 
   - platform: gpio
     name: "Jukebox Button Play/Pause"
@@ -167,7 +171,9 @@ binary_sensor:
           - ON for at least 700ms
         then:
           - homeassistant.action:
-              action: rfid_jukebox.stop
+              action: media_player.media_stop
+              data:
+                entity_id: ${media_player_entity_id}
 
   - platform: gpio
     name: "Jukebox Button Next"
@@ -178,7 +184,9 @@ binary_sensor:
           - OFF for at least 50ms
         then:
           - homeassistant.action:
-              action: rfid_jukebox.next_track
+              action: media_player.media_next_track
+              data:
+                entity_id: ${media_player_entity_id}
 
       - timing:
           - ON for at least 600ms

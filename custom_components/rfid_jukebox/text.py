@@ -33,6 +33,14 @@ class FolderNameText(TextEntity):
         self._attr_icon = "mdi:folder-music"
         self._attr_native_value = ""
 
+    @property
+    def device_info(self):
+        """Return device information."""
+        return {
+            "identifiers": {(DOMAIN, self._jukebox.entry.entry_id)},
+            "name": "RFID Jukebox",
+        }
+
     async def async_set_value(self, value: str) -> None:
         """Change the value of the text entity."""
         self._attr_native_value = value

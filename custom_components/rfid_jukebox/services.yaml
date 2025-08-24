@@ -16,12 +16,3 @@ map_tag:
       required: true
       selector:
         text:
-next_track:
-  name: Next Track
-  description: Plays the next track in the current folder.
-previous_track:
-  name: Previous Track
-  description: Plays the previous track in the current folder.
-stop:
-  name: Stop
-  description: Stops the media player.

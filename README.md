@@ -17,10 +17,11 @@ This repository contains:
 *   **Physical Controls**: Use physical buttons and a knob for play/pause, next/previous track, and volume control.
 *   **Simple Mapping UI**: A user-friendly interface within Home Assistant to map new RFID tags to music folders.
 *   **Automatic Advancement**: When a song finishes, the next track in the folder plays automatically.
+*   **"Now Playing" Context**: The integration provides a virtual media player that shows the current track, artist, and album in the Home Assistant UI.
 
 ---
 
-## 🛠️ The Build: Hardware & Assembly
+## �️ The Build: Hardware & Assembly
 
 This build uses a two-board ESP32 design for simplicity: one board acts as the audio player, and a second board acts as the physical controller.
 
@@ -88,10 +89,9 @@ This setup uses two ESP32 boards.
 2.  **Flash the Controller (Generic ESP32)**:
     *   Connect the PN532, buttons, and rotary encoder to this ESP32.
     *   Open the `esphome/jukebox.yaml` file from this repository.
-    *   Modify your Wi-Fi credentials and targeted music player. Maybe some pins are different for you as well. 
-    *   Flash it / add it to home assistant. This will create the RFID `text_sensor` and button entities.
+    *   Modify your Wi-Fi credentials and flash it. This will create the RFID `text_sensor` and button entities.
 
-> **Advanced Alternative**: It is theoretically possible to use a single Louder-ESP32S3 for everything. However, this would require soldering the buttons, knob, and RFID reader to the board's small test points, which is difficult. The two-board approach is what I decided to go for. 
+> **Advanced Alternative**: It is theoretically possible to use a single Louder-ESP32S3 for everything. However, this would require soldering the buttons, knob, and RFID reader to the board's small test points, which is difficult. The two-board approach is much simpler.
 
 ### Step 3: Install and Configure the Home Assistant Integration
 
@@ -182,14 +182,18 @@ Here are examples of how to call these services from the **Developer Tools > Ser
 ```yaml
 service: media_player.media_play_pause
 target:
-  entity_id: media_player.pau_phonie # <-- Change to your media player
+  entity_id: media_player.rfid_jukebox # <-- This is the virtual media player
 ```
 
 **Next Track:**
 ```yaml
-service: rfid_jukebox.next_track
+service: media_player.media_next_track
+target:
+  entity_id: media_player.rfid_jukebox # <-- This is the virtual media player
 ```
 
 **Previous Track:**
 ```yaml
-service: rfid_jukebox.previous_track
+service: media_player.media_previous_track
+target:
+  entity_id: media_player.rfid_jukebox # <-- This is the virtual media player

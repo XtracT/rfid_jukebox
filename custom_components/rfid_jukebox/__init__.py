@@ -7,6 +7,7 @@ from urllib.parse import quote
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
     async_process_play_media_url,
+    MediaPlayerState,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -25,13 +26,18 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up RFID Jukebox from a config entry."""
+    _LOGGER.info("Setting up RFID Jukebox entry: %s", entry.entry_id)
     hass.data.setdefault(DOMAIN, {})
     jukebox = RFIDJukebox(hass, entry)
     hass.data[DOMAIN][entry.entry_id] = jukebox
 
     await jukebox.async_setup()
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["text", "button"])
+    _LOGGER.info("Forwarding entry setups to platforms.")
+    await hass.config_entries.async_forward_entry_setups(
+        entry, ["text", "button", "media_player"]
+    )
+    _LOGGER.info("Entry setups forwarded.")
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
@@ -41,7 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, ["text", "button"]
+        entry, ["text", "button", "media_player"]
     )
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -70,6 +76,7 @@ class RFIDJukebox:
         self.last_played_playlist_name = None
         self.track_queue = []
         self.current_track_index = -1
+        self.media_player = None
 
     async def async_setup(self):
         """Set up the jukebox."""
@@ -99,15 +106,6 @@ class RFIDJukebox:
         self.hass.services.async_register(
             DOMAIN, "map_tag", self.async_map_tag_service
         )
-        self.hass.services.async_register(
-            DOMAIN, "next_track", self.async_next_track_service
-        )
-        self.hass.services.async_register(
-            DOMAIN, "previous_track", self.async_previous_track_service
-        )
-        self.hass.services.async_register(
-            DOMAIN, "stop", self.async_stop_service
-        )
 
     async def async_tag_changed_handler(self, event_data):
         """Handle state changes for the RFID tag sensor."""
@@ -131,18 +129,20 @@ class RFIDJukebox:
 
             # If it's the same tag that was just playing, resume.
             if self.current_tag == new_tag:
-                await self.async_play()
+                await self.media_player.async_media_play()
             # Otherwise, it's a new playlist.
             else:
                 self.current_tag = new_tag
                 if new_tag in self.mappings:
-                    await self.async_play_folder(self.mappings[new_tag])
+                    await self.media_player.async_play_media(
+                        "folder", self.mappings[new_tag]
+                    )
                 else:
                     _LOGGER.warning("Unmapped tag scanned: %s", new_tag)
         # Tag is removed
         else:
             if self.current_tag:
-                await self.async_pause()
+                await self.media_player.async_media_pause()
                 # We don't clear current_tag here, so we can resume it later
 
     async def async_play_folder(self, folder_name: str):
@@ -171,6 +171,12 @@ class RFIDJukebox:
         self.current_track_index = 0
         await self.async_play_current_track()
 
+        # Update the virtual player's state
+        self.media_player._attr_media_playlist = [
+            os.path.basename(track) for track in self.track_queue
+        ]
+        self.media_player.async_write_ha_state()
+
     def _scan_folder_sync(self, folder_path: str) -> Optional[list[str]]:
         """Scan a folder for playable media (synchronous)."""
         if not os.path.isdir(folder_path):
@@ -185,8 +191,18 @@ class RFIDJukebox:
 
     async def async_play_current_track(self):
         """Play the current track in the queue."""
-        media_url = self._get_media_source_url(self.track_queue[self.current_track_index])
+        track_path = self.track_queue[self.current_track_index]
+        media_url = self._get_media_source_url(track_path)
         if media_url:
+            # Update the virtual player's state
+            self.media_player._attr_media_title = os.path.basename(track_path)
+            self.media_player._attr_queue_position = self.current_track_index
+            self.media_player._attr_state = MediaPlayerState.PLAYING
+            self.media_player._attr_media_image_url = self._get_album_art_url(
+                track_path
+            )
+            self.media_player.async_write_ha_state()
+
             # Call the media_player.play_media service to play the track
             await self.hass.services.async_call(
                 "media_player",
@@ -222,6 +238,15 @@ class RFIDJukebox:
             _LOGGER.error("Error getting media source URL for '%s': %s", media_path, e)
             return None
 
+    def _get_album_art_url(self, track_path: str) -> Optional[str]:
+        """Find the album art for the current track and return its URL."""
+        folder_path = os.path.dirname(track_path)
+        for cover_file in ["cover.jpg", "folder.jpg"]:
+            cover_path = os.path.join(folder_path, cover_file)
+            if os.path.exists(cover_path):
+                return self._get_media_source_url(cover_path)
+        return None
+
     async def async_play(self):
         """Resume playback on the media player."""
         _LOGGER.info("Resuming playback")
@@ -231,6 +256,8 @@ class RFIDJukebox:
             {"entity_id": self.config[CONF_MEDIA_PLAYER]},
             blocking=True,
         )
+        self.media_player._attr_state = MediaPlayerState.PLAYING
+        self.media_player.async_write_ha_state()
 
     async def async_pause(self):
         """Pause the media player."""
@@ -241,6 +268,8 @@ class RFIDJukebox:
             {"entity_id": self.config[CONF_MEDIA_PLAYER]},
             blocking=True,
         )
+        self.media_player._attr_state = MediaPlayerState.PAUSED
+        self.media_player.async_write_ha_state()
 
     async def async_next_track(self):
         """Play the next track in the queue."""
@@ -260,6 +289,48 @@ class RFIDJukebox:
         await self.hass.services.async_call(
             "media_player",
             "media_stop",
+            {"entity_id": self.config[CONF_MEDIA_PLAYER]},
+            blocking=True,
+        )
+        self.media_player._attr_state = MediaPlayerState.IDLE
+        self.media_player.async_write_ha_state()
+
+    async def async_set_volume_level(self, volume):
+        """Set the volume level on the media player."""
+        _LOGGER.debug("Setting volume to %s", volume)
+        await self.hass.services.async_call(
+            "media_player",
+            "volume_set",
+            {"entity_id": self.config[CONF_MEDIA_PLAYER], "volume_level": volume},
+            blocking=True,
+        )
+
+    async def async_mute_volume(self, mute):
+        """Mute the volume on the media player."""
+        _LOGGER.debug("Setting mute to %s", mute)
+        await self.hass.services.async_call(
+            "media_player",
+            "volume_mute",
+            {"entity_id": self.config[CONF_MEDIA_PLAYER], "is_volume_muted": mute},
+            blocking=True,
+        )
+
+    async def async_volume_up(self):
+        """Turn the volume up on the media player."""
+        _LOGGER.debug("Turning volume up")
+        await self.hass.services.async_call(
+            "media_player",
+            "volume_up",
+            {"entity_id": self.config[CONF_MEDIA_PLAYER]},
+            blocking=True,
+        )
+
+    async def async_volume_down(self):
+        """Turn the volume down on the media player."""
+        _LOGGER.debug("Turning volume down")
+        await self.hass.services.async_call(
+            "media_player",
+            "volume_down",
             {"entity_id": self.config[CONF_MEDIA_PLAYER]},
             blocking=True,
         )
@@ -307,24 +378,38 @@ class RFIDJukebox:
         ):
             _LOGGER.debug("Track finished, playing next one.")
             await self.async_next_track()
-        elif new_state.state == "idle" and self.track_queue and self.current_track_index >= len(self.track_queue) - 1:
+        elif (
+            new_state.state == "idle"
+            and self.track_queue
+            and self.current_track_index >= len(self.track_queue) - 1
+        ):
             _LOGGER.info("Last track in folder finished.")
             self.current_tag = None
             self.track_queue = []
             self.current_track_index = -1
 
+        # Sync volume and mute state
+        if self.media_player:
+            volume_changed = False
+            if new_state.attributes.get("volume_level") != self.media_player.volume_level:
+                self.media_player._attr_volume_level = new_state.attributes.get(
+                    "volume_level"
+                )
+                volume_changed = True
 
-    async def async_next_track_service(self, service_call):
-        """Handle the next_track service call."""
-        await self.async_next_track()
+            if (
+                new_state.attributes.get("is_volume_muted")
+                != self.media_player.is_volume_muted
+            ):
+                self.media_player._attr_is_volume_muted = new_state.attributes.get(
+                    "is_volume_muted"
+                )
+                volume_changed = True
 
-    async def async_previous_track_service(self, service_call):
-        """Handle the previous_track service call."""
-        await self.async_previous_track()
+            if volume_changed:
+                self.media_player.async_write_ha_state()
 
-    async def async_stop_service(self, service_call):
-        """Handle the stop service call."""
-        await self.async_stop()
+
 
 
     async def async_map_tag_from_ui(self):

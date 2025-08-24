@@ -27,13 +27,18 @@ class MapTagButton(ButtonEntity):
     def __init__(self, jukebox):
         """Initialize the button entity."""
         self._jukebox = jukebox
-        self._attr_name = "Map Scanned Tag to Selected Playlist"
-        self._attr_unique_id = f"{DOMAIN}_map_tag_button"
+        self._attr_name = "Map Last Tag"
+        self._attr_unique_id = f"{jukebox.entry.entry_id}_map_last_tag"
         self._attr_icon = "mdi:tag-plus"
+
+    @property
+    def device_info(self):
+        """Return device information."""
+        return {
+            "identifiers": {(DOMAIN, self._jukebox.entry.entry_id)},
+            "name": "RFID Jukebox",
+        }
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        _LOGGER.debug("Map tag button pressed")
-        playlist_to_map = self._jukebox.playlist_to_map
-        tag_id = self._jukebox.last_tag
-        await self._jukebox.async_map_tag(tag_id, playlist_to_map)
+        await self._jukebox.async_map_tag_from_ui()
