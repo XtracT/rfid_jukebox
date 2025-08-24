@@ -1,5 +1,9 @@
 # 🎵 RFID Jukebox: A DIY Jukebox for Home Assistant
 
+<p align="center">
+  <img src="docs/jukebox.png" alt="Jukebox Render" width="400"/>
+</p>
+
 Welcome! This project provides everything you need to build a simple, robust, and kid-friendly jukebox using RFID tags, an ESP32, and the power of Home Assistant.
 
 The goal is to create a standalone music player that's easy for anyone to use—just place a card on the box, and music starts playing. It's a modern take on the classic jukebox, built with modern, open-source tools.
