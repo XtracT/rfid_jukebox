@@ -109,7 +109,8 @@ class RFIDJukebox:
             else:
                 self.current_tag = new_tag
                 if new_tag in self.mappings:
-                    await self.async_start_new_playlist(self.mappings[new_tag])
+                    #await self.async_start_new_playlist(self.mappings[new_tag])
+                    await self.async_start_new_folder(self.mappings[new_tag])
                 else:
                     _LOGGER.warning("Unmapped tag scanned: %s", new_tag)
         # Tag is removed
@@ -140,6 +141,34 @@ class RFIDJukebox:
                 playlist_name,
                 err,
             )
+
+    async def async_start_new_folder(self, folder_name: str):
+        """HACK: play a Music Assistant folder now (hardcoded filesystem + device)."""
+        from homeassistant.exceptions import HomeAssistantError
+
+        filesystem = "filesystem_local--tkx9ahNv"  # hardcoded for now
+
+        # Build "<filesystem>://folder/<path>"
+        path = str(folder_name).strip().lstrip("/\\").replace("\\", "/")
+        media_id = f"{filesystem}://folder/{path}"
+        _LOGGER.info("Starting new folder '%s'", media_id)
+        try:
+            await self.hass.services.async_call(
+                "music_assistant",
+                "play_media",
+                {   
+                    "entity_id": self.config[CONF_MEDIA_PLAYER],
+                    "media_id": media_id,
+                    "media_type": "folder",
+                },
+                blocking=True,
+            )
+        except HomeAssistantError as err:
+            _logger = globals().get("_LOGGER")  # keep it simple for now
+            if _logger:
+                _logger.error("MA folder play failed (%s): %s", media_id, err)
+            else:
+                raise
 
     async def async_resume_playback(self):
         """Resume the currently paused media player."""
