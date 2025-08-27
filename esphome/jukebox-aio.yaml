@@ -10,6 +10,8 @@ substitutions:
   encoder_b_pin: GPIO6   # USR-ES1 nINT   (your B/DT)
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
+  ma_filesystem: filesystem_local--tkx9ahNv
+  ma_entity: media_player.jukebox_pau_louder_mediaplayer_2
 
 esphome:
   name: ${name}
@@ -18,17 +20,24 @@ esphome:
   name_add_mac_suffix: false
   platformio_options:
     board_build.flash_mode: dio
+  includes:
   # Importnant! Play sound on boot required for DAC to capture clock signal and enable DSP configuration
   # If any of the DSP configs are sent before clock signal, they are simply ignored. This applies to EQ and Mixer controls
   on_boot:
-    priority: 220.0
-    then:
-      media_player.speaker.play_on_device_media_file: startup_sync_sound
+    - priority: 800.0  # High priority to initialize mappings
+      then:
+        - lambda: |-
+            ESP_LOGI("rfid", "Tag mapping system initialized");
+            id(tag_mapping_loaded) = true;
+    - priority: 220.0
+      then:
+        media_player.speaker.play_on_device_media_file: startup_sync_sound
 
 esp32:
   board: esp32-s3-devkitc-1
   variant: ESP32S3
   flash_size: 16MB
+  partitions: partitions.csv
   framework:
     type: esp-idf
     version: recommended
@@ -70,28 +79,29 @@ ota:
   platform: esphome
 #  password: !secret esphome_ota_password
 
-# Enable Home Assistant API
 api:
 
 psram:
   mode: octal
   speed: 80MHz
 
-# network:
-#   enable_ipv6: true
-
 external_components:
   - source: github://mrtoy-me/esphome-tas5805m@main
     components: [ tas5805m ]
     refresh: 60s
-  # - source: github://c-MM/esphome-snapclient
-  #   components: [ snapclient ]
-  #   refresh: 0s
 
 globals:
   - id: current_volume
     type: float
   - id: tag_present
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: last_tag_queued
+    type: std::string
+    restore_value: no
+    initial_value: ""
+  - id: tag_mapping_loaded
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -117,16 +127,6 @@ audio_dac:
 i2s_audio:
   i2s_lrclk_pin: GPIO15
   i2s_bclk_pin: GPIO14
-
-### Snapclient component is a work in progress, not yet ready for production use
-# Will be updated, as soon as snapclient component is ready
-# snapclient:
-#   hostname: 192.168.1.49
-#   port: 1704
-#   name: $friendly_name
-#   audio_dac: tas5805m_dac
-#   i2s_dout_pin: GPIO16
-#   webserver_port: 8080  # start webserver for equalizer
 
 speaker:
   - platform: i2s_audio
@@ -164,18 +164,18 @@ media_player:
     name: Louder Mediaplayer
     id: louder_mediaplayer
     task_stack_in_psram: ${task_stack_in_psram}
-    buffer_size: 100000 # default is 1000000
+    #buffer_size: 100000 # default is 1000000
     volume_increment: 2%
     volume_initial: 50%
     volume_max: 80%
     media_pipeline:
       speaker: media_spk_resampling_input
       num_channels: 2
-      format: NONE   
+      #format: NONE   
     announcement_pipeline:
       speaker: announcement_spk_resampling_input
       num_channels: 1
-      format: NONE   
+      #format: NONE   
 
     files:
       id: startup_sync_sound
@@ -214,7 +214,6 @@ media_player:
             decibel_reduction: 0
             duration: 1.0s
       - lambda: id(tas5805m_dac).set_volume(id(current_volume));
-
 
 switch:
   - platform: tas5805m
@@ -305,7 +304,6 @@ sensor:
       - media_player.volume_down:
           id: louder_mediaplayer
 
-
 ### Faults registers read directly from TAS5805M
 # TODO: Over Temperature Warning -> reduce volume automatically before it goes into shutdown
 binary_sensor:
@@ -349,7 +347,7 @@ binary_sensor:
       - homeassistant.action:
           action: media_player.media_previous_track
           data:
-            entity_id: media_player.louder_mediaplayer
+            entity_id: ${ma_entity}
 
   - platform: gpio
     name: "${friendly_name} Next Button"
@@ -364,7 +362,7 @@ binary_sensor:
       - homeassistant.action:
           action: media_player.media_next_track
           data:
-            entity_id: media_player.louder_mediaplayer
+            entity_id: ${ma_entity}
 
 
 ### Send DAC to shutdown mode after 2 minutes of inactivity
@@ -398,6 +396,37 @@ button:
   - platform: restart
     id: restart_btn
     name: "${friendly_name} REBOOT"
+  - platform: template
+    id: map_current_tag_btn
+    name: "Map Current Tag → Folder"
+    on_press:
+      - lambda: |-
+          std::string tag = id(rfid_tag_uid).state.c_str();
+          std::string folder = id(folder_to_map).state.c_str();
+          if (tag.empty() || tag == "Unknown" || tag == "none" || folder.empty()) {
+            ESP_LOGW("rfid", "Skip mapping (tag='%s', folder='%s')", tag.c_str(), folder.c_str());
+            return;
+          }
+
+          // Normalize UID (remove colons, uppercase)
+          std::string norm = tag;
+          norm.erase(std::remove(norm.begin(), norm.end(), ':'), norm.end());
+          for (auto &c : norm) c = ::toupper((unsigned char)c);
+
+          // Key: namespace 'TAGM' XOR FNV1 hash of UID
+          const uint32_t key = 0x5441474Du ^ esphome::fnv1_hash(norm);
+
+          // Store folder (fixed-size char[64] - should be sufficient for most folder names)
+          char buf[64];
+          memset(buf, 0, sizeof(buf));
+          strncpy(buf, folder.c_str(), sizeof(buf) - 1);
+
+          auto pref = esphome::global_preferences->make_preference<char[64]>(key);
+          if (!pref.save(&buf)) {
+            ESP_LOGE("rfid", "NVS save failed for %s - storage may be full", norm.c_str());
+            return;
+          }
+          ESP_LOGI("rfid", "Mapped %s -> %s", norm.c_str(), buf);
 
 spi:
   clk_pin: ${pn532_sclk}
@@ -409,95 +438,123 @@ text_sensor:
     name: "RFID Jukebox Tag"
     id: rfid_tag_uid
     icon: "mdi:rfid"
+#    on_value:
+#      then:
+#        - script.execute: handle_tag_change
+  - platform: template
+    name: "Last Scanned RFID Jukebox Tag"
+    id: rfid_tag_uid_prev
+    icon: "mdi:rfid"
+  - platform: template
+    id: rfid_mapped_folder
+    name: "RFID Mapped Folder"
+    update_interval: never
+
+text:
+  - platform: template
+    id: folder_to_map
+    name: "RFID Folder to Map"
+    mode: text          # <— valid here
+    optimistic: true
+    restore_value: true
+    initial_value: "test2"
+    min_length: 0
+    max_length: 63
+
 
 pn532_spi:
   cs_pin: ${pn532_cs}
-  update_interval: 300ms
-
+  update_interval: 200ms   # slightly relaxed to avoid churn
   on_tag:
     then:
       - if:
           condition:
             lambda: 'return !id(tag_present);'
           then:
-            - lambda: |-
-                id(tag_present) = true;
-                id(rfid_tag_uid).publish_state(x);
-            - homeassistant.event:
-                event: esphome.rfid_tag
-                data:
-                  uid: !lambda |-
-                    // Make UID UPPERCASE and remove colons
-                    std::string uid = x;
-                    for (size_t i = 0; i < uid.size(); ++i) {
-                      if (uid[i] == ':') { uid.erase(i, 1); --i; }
-                      else { uid[i] = ::toupper((unsigned char)uid[i]); }
-                    }
-                    return uid;
-
+            - lambda: 'id(tag_present) = true;'
+            - text_sensor.template.publish:
+                id: rfid_tag_uid
+                state: !lambda 'return x;'
+            - script.execute: handle_tag_change   # defer all work
   on_tag_removed:
     then:
       - if:
           condition:
-            lambda: 'return id(tag_present) == false;'
+            lambda: 'return id(tag_present);'
           then:
-            # Already handled — do nothing
-          else:
-            - lambda: |-
-                id(tag_present) = false;
-                id(rfid_tag_uid).publish_state("Unknown");
-            - homeassistant.event:
-                event: esphome.rfid_tag_removed
-
-
-
-
-
+            - lambda: 'id(tag_present) = false;'
+            - text_sensor.template.publish:
+                id: rfid_tag_uid
+                state: "Unknown"
+            - media_player.pause   # pause the local ESPHome player
 
 script:
   - id: handle_tag_change
     mode: restart
     then:
-      # 1) Normalize tag and resolve mapping
+      # Yield out of the PN532 cycle so HA/API stays responsive
+      # 1) Resolve mapping for current tag
       - lambda: |-
-          std::string tag = id(rfid_tag_uid).state.c_str();
-          if (tag.empty() || tag == "Unknown") {
+          std::string curr = id(rfid_tag_uid).state.c_str();
+          if (curr.empty() || curr == "Unknown") {
             id(rfid_mapped_folder).publish_state("");
             ESP_LOGI("rfid","handle_tag_change: tag cleared");
             return;
           }
-          // remove colons + uppercase (if your keys are stored like this)
-          tag.erase(std::remove(tag.begin(), tag.end(), ':'), tag.end());
-          for (auto &c : tag) c = ::toupper((unsigned char)c);
 
-          const std::string kv = id(tag_map_kv);        // "TAG=folder;TAG2=folder2;..."
-          const std::string key = tag + "=";
-          const size_t pos = kv.find(key);
-          if (pos == std::string::npos) {
+          // normalize UID (remove colons, uppercase)
+          std::string norm = curr;
+          norm.erase(std::remove(norm.begin(), norm.end(), ':'), norm.end());
+          for (auto &c : norm) c = ::toupper((unsigned char)c);
+
+          // Key and NVS read
+          const uint32_t key = 0x5441474Du ^ esphome::fnv1_hash(norm);
+          char buf[64];
+          memset(buf, 0, sizeof(buf));
+          auto pref = esphome::global_preferences->make_preference<char[64]>(key);
+
+          if (!pref.load(&buf) || buf[0] == '\0') {
             id(rfid_mapped_folder).publish_state("");
-            ESP_LOGI("rfid","handle_tag_change: %s unmapped", tag.c_str());
+            ESP_LOGI("rfid","handle_tag_change: %s unmapped", norm.c_str());
             return;
           }
-          size_t vs = pos + key.length();
-          size_t ve = kv.find(';', vs);
-          std::string folder = (ve == std::string::npos) ? kv.substr(vs) : kv.substr(vs, ve - vs);
+
+          std::string folder = buf;
+          
+          // Clean up folder path
           while (!folder.empty() && (folder.front() == '/' || folder.front() == '\\')) folder.erase(0,1);
           for (auto &c : folder) if (c == '\\') c = '/';
 
-          id(rfid_mapped_folder).publish_state(folder.c_str());
-          ESP_LOGI("rfid","handle_tag_change: %s -> '%s'", tag.c_str(), folder.c_str());
+          // stash folder + media_id for the action step
+          id(rfid_mapped_folder).publish_state(folder.c_str());  // UI only; harmless
+          id(last_tag_queued) = std::string("${ma_filesystem}") + "://folder/" + folder;
+          ESP_LOGI("rfid","handle_tag_change: %s -> '%s'", norm.c_str(), folder.c_str());
 
-      # 2) OPTIONAL: directly call Music Assistant (can be flaky while tag is held)
+      # 2) If mapped → RESUME when same tag returns, else START (replace queue)
       - if:
           condition:
             lambda: 'return id(rfid_mapped_folder).state.size() > 0;'
           then:
-            - delay: 250ms   # yield so HA can process the sensor update
-            - homeassistant.action:
-                action: music_assistant.play_media
-                data:
-                  entity_id: ${ma_entity}   # MUST be the MA player entity
-                  media_type: folder
-                  enqueue: replace
-                  media_id: !lambda |-
-                    return std::string("${ma_filesystem}") + "://folder/" + id(rfid_mapped_folder).state.c_str();
+            # same tag → RESUME
+            - if:
+                condition:
+                  lambda: 'return id(rfid_tag_uid).state == id(rfid_tag_uid_prev).state;'
+                then:
+                  - media_player.play
+                  - lambda: 'ESP_LOGI("rfid","resume: same tag");'
+                else:
+                  # different tag → START (replace queue)
+                  - homeassistant.action:
+                      action: music_assistant.play_media
+                      data:
+                        entity_id: ${ma_entity}
+                        media_type: folder
+                        enqueue: replace
+                        media_id: !lambda 'return id(last_tag_queued);'
+                  - lambda: 'ESP_LOGI("rfid","start: %s", id(last_tag_queued).c_str());'
+
+            # 3) Update "previous" AFTER acting on a mapped tag
+            - text_sensor.template.publish:
+                id: rfid_tag_uid_prev
+                state: !lambda 'return id(rfid_tag_uid).state;'
+
