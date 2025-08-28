@@ -24,11 +24,6 @@ esphome:
   # Importnant! Play sound on boot required for DAC to capture clock signal and enable DSP configuration
   # If any of the DSP configs are sent before clock signal, they are simply ignored. This applies to EQ and Mixer controls
   on_boot:
-    - priority: 800.0  # High priority to initialize mappings
-      then:
-        - lambda: |-
-            ESP_LOGI("rfid", "Tag mapping system initialized");
-            id(tag_mapping_loaded) = true;
     - priority: 220.0
       then:
         media_player.speaker.play_on_device_media_file: startup_sync_sound
@@ -93,18 +88,14 @@ external_components:
 globals:
   - id: current_volume
     type: float
-  - id: tag_present
-    type: bool
-    restore_value: no
-    initial_value: 'false'
   - id: last_tag_queued
     type: std::string
     restore_value: no
     initial_value: ""
-  - id: tag_mapping_loaded
-    type: bool
+  - id: last_tag_uid
+    type: std::string
     restore_value: no
-    initial_value: 'false'
+    initial_value: ""
 
 i2c:
   sda: GPIO8
@@ -442,10 +433,6 @@ text_sensor:
 #      then:
 #        - script.execute: handle_tag_change
   - platform: template
-    name: "Last Scanned RFID Jukebox Tag"
-    id: rfid_tag_uid_prev
-    icon: "mdi:rfid"
-  - platform: template
     id: rfid_mapped_folder
     name: "RFID Mapped Folder"
     update_interval: never
@@ -467,26 +454,17 @@ pn532_spi:
   update_interval: 200ms   # slightly relaxed to avoid churn
   on_tag:
     then:
-      - if:
-          condition:
-            lambda: 'return !id(tag_present);'
-          then:
-            - lambda: 'id(tag_present) = true;'
-            - text_sensor.template.publish:
-                id: rfid_tag_uid
-                state: !lambda 'return x;'
-            - script.execute: handle_tag_change   # defer all work
+      - text_sensor.template.publish:
+          id: rfid_tag_uid
+          state: !lambda 'return x;'
+      - script.execute: handle_tag_change   # defer all work
   on_tag_removed:
     then:
-      - if:
-          condition:
-            lambda: 'return id(tag_present);'
-          then:
-            - lambda: 'id(tag_present) = false;'
-            - text_sensor.template.publish:
-                id: rfid_tag_uid
-                state: "Unknown"
-            - media_player.pause   # pause the local ESPHome player
+      - text_sensor.template.publish:
+          id: rfid_tag_uid
+          state: "Unknown"
+      - script.execute: handle_tag_change
+      - media_player.pause   # pause the local ESPHome player
 
 script:
   - id: handle_tag_change
@@ -538,7 +516,7 @@ script:
             # same tag → RESUME
             - if:
                 condition:
-                  lambda: 'return id(rfid_tag_uid).state == id(rfid_tag_uid_prev).state;'
+                  lambda: 'return id(rfid_tag_uid).state == id(last_tag_uid);'
                 then:
                   - media_player.play
                   - lambda: 'ESP_LOGI("rfid","resume: same tag");'
@@ -554,7 +532,5 @@ script:
                   - lambda: 'ESP_LOGI("rfid","start: %s", id(last_tag_queued).c_str());'
 
             # 3) Update "previous" AFTER acting on a mapped tag
-            - text_sensor.template.publish:
-                id: rfid_tag_uid_prev
-                state: !lambda 'return id(rfid_tag_uid).state;'
+            - lambda: 'id(last_tag_uid) = id(rfid_tag_uid).state;'
 
