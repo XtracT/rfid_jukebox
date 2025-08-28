@@ -1,115 +1,169 @@
-# 🎵 RFID Jukebox: A Home Assistant + Music Assistant tag based jukebox! 
+# 🎵 RFID Jukebox — ESPHome + Music Assistant + Home Assistant
 
-The goal is to create a simple, robust, and kid-friendly way to play music using physical RFID tags. This project is inspired by the desire for a less complex alternative to solutions like Phoniebox, leveraging the power and flexibility of Home Assistant, ESPHome,squeezelite-esp32, and Music Assistant. In order to achieve that, this repository provides: 
+A dead-simple, kid-proof jukebox you can build with an ESP32, a PN532 RFID reader, and Music Assistant.  
+This repo focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
 
-- A Bill of Materials and tutorial on how to make a toddler-targeted jukebox. 
-- An EspHome yaml file to add RFID reader, buttons and knob functionality. 
-- A custom integration for Home Assistant that connects the ESP32 connected RFID reader to the required media player. 
+You can achieve the same result in two ways. **Recommended is the HA-centric path (easier to manage, fewer moving parts).**  
+The ESPHome-only “AIO” is provided as an advanced option.
 
-Therefore, the main contribution is the integration. There are many different ways to achieve this setup though, so other contributions are welcome! 
+- **Option 1 — Home Assistant-centric (Recommended):**  
+  ESPHome only reports the tag. A custom **HA integration** (HACS install) keeps the mapping and fires the Music Assistant call. Best for lots of tags, central tag mapping, backups, and multi-room.
+- **Option 2 — ESPHome-centric “AIO” (Advanced):**  
+  Tag → folder mapping is stored **on the device** (ESP-NVS). The ESP32 calls `music_assistant.play_media` directly. Lowest latency, but more firmware logic and less convenient mapping/backup.
 
-This is the list of used hardware:
-- 1 [Louder-ESP32S3 by Sonocotta](https://www.tindie.com/products/sonocotta/louder-esp32s3/)
-- 2 pcs [AIYIMA speakers](https://www.aliexpress.com/item/1005003690882286.html?spm=a2g0o.order_list.order_list_main.57.645a5c5fcSl91U)
-- 1 PN532
-- 1 [keyes 040 knob](https://www.amazon.de/KEYESTUDIO-Encoder-Development-Arduino-Raspberry/dp/B085944A4G)
-- 2 pcs cherry mx style switches, any style will do 
-- "any" esp32 dev board
-- an optional type C power bank
-- The enclosure is 3D printed, you will be able to find the files [here](https://www.pending.com)
-- Assortment of M3x4mm threaded inserts, M3x6mm screws, M3x8mm screws, M3x100mm screws (check aliexpress)
-- Maybe M2.5x3mm inserts
-- Type C cables
-- 1 [Type C through panel](https://de.aliexpress.com/item/1005008176772218.html?spm=a2g0o.order_list.order_list_main.142.5a0f5c5fB82eEa&gatewayAdapt=glo2deu)
+---
 
-The Louder-ESP32S3 is powered via 5V3A, which gives more than enough volume. The Loud-ESP32S3 would also work, but then the amplifier would be the limit and the possibilities to upgrade or reuse later in a more powerful setup are limited. For the difference in cost, I would recommend to go to the Louder. 
+## ✨ Highlights
 
-## Quick go through
+- **Present a tag → music starts** (Music Assistant folder)
+- **Remove tag → pause**
+- **Hold the same tag → resume**, **new tag → start playing new folder**
+- **Rotary encoder** for volume, **buttons** for prev/next
+- Two approaches (device-centric vs HA-centric), switchable
 
-1. Flash squeezelite-ESP32 to the Louder-ESP32S3 (you could also use ESPHome, check Sonocotta's repository)
-2. Connect it to Music Assistant (you need to point it to Music Assistant's IP, do not add any port)
-3. Wire the PN532 (or any other RFID reader supported by EspHome) to the ESP32 board, and the optional knob and buttons. 
-4. Flash the ESP32 using EspHome and the provided yaml (modify as/if required). 
-5. Add the integration to home assistant, that makes everything work together. 
-6. Map tags to Music Assistant playlists, enjoy your toddler friendly jukebox! 
-7. Limit the max volume using the "Target level for volume normalization" setting in Music Assistant. 
-8. 
+---
 
-## 🎯 Core Features of the Home Assistant Integrations. 
- 
-*   **Tag-Based Playback**: Scan an RFID tag to instantly play the linked Music Assistant playlist.
-*   **Seamless Control**: Play, pause, or resume music directly from tag presence.
-*   **Simple Mapping UI**: A user-friendly interface within Home Assistant to map new RFID tags to playlists.
-*   **Unknown Tag Alerts**: Get notified via TTS when an unmapped tag is scanned.
-*   **Standalone & Integrated**: Works with any RFID reader that can publish tag IDs to an HA entity (e.g., via ESPHome or MQTT).
+## 🧱 Hardware (tested)
 
-## ⚙️ Configuration
+- Louder-ESP32S3 (by Sonocotta, highly recommended!) or any ESP32 with I²S DAC/amp  
+- PN532 RFID reader (**SPI** tested; **I²C** likely fine but **not tested** here)  
+- Rotary encoder (e.g., Keyestudio 040)  
+- 2× momentary buttons  
+- Passive speakers + 5V/3A power (enough for a kid!)
+- Optional 3D-printed enclosure (files/link coming soon)
 
-This integration is configured via the Home Assistant UI.
+> Pinouts in the sample YAMLs target Louder-ESP32S3 + PN532 (SPI). Adjust as needed.  
+> I²C hasn’t been tested here to avoid interfering with the DAC interface.
 
-1.  Go to **Settings > Devices & Services**.
-2.  Click **Add Integration** and search for **RFID Jukebox**.
-3.  Follow the on-screen instructions to configure the integration. You will need to provide:
-    *   **Tag Sensor**: The `sensor` or `input_text` entity that provides the RFID tag ID.
-    *   **Media Player**: The media player to control.
-    *   **Unmapped Tag TTS Message** (Optional): The message to announce when an unmapped tag is scanned.
-    *   **TTS Service** (Optional): The TTS service to use for announcements.
+---
 
-## 🎛️ Entities
+## 🚀 Quick Start (Recommended HA-centric path)
 
-This integration automatically creates the following entities to provide a simple UI for mapping tags:
+### 1) Install the integration via HACS
+- In Home Assistant: **HACS → Integrations → Search “RFID Jukebox” → Install**.  
+  If it’s not listed yet, add this repo as a **Custom Repository** (category: *Integration*), then install via HACS.
+- **Restart Home Assistant**.
 
--   **`sensor.rfid_jukebox_last_tag`**: Displays the ID of the last scanned RFID tag.
--   **`text.rfid_jukebox_playlist_to_map`**: A text field where you will type the exact name of the Music Assistant playlist you want to map.
--   **`button.rfid_jukebox_map_tag_button`**: A button that, when pressed, maps the last scanned tag to the playlist name you entered in the text field.
+### 2) Add the integration
+- Go to **Settings → Devices & Services → Add Integration → RFID Jukebox**.
+- Select:
+  - The **RFID tag sensor** (from ESPHome, e.g. `text_sensor.rfid_jukebox_tag`)
+  - Your **Music Assistant player** entity (e.g. `media_player.jukebox_*`)
 
-## 🏷️ How to Map a New Tag
+### 3) Flash the basic ESPHome firmware
+- Use `esphome/jukebox.yaml`.
+- Adjust pins to your wiring.
+- Compile & flash with ESPHome.
 
-Mapping a new tag is a simple, three-step process:
+### 4) Map tags from the HA UI
+- Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
+- Enter the **exact** MA folder name in `text.rfid_jukebox_playlist_to_map`.
+- Press `button.rfid_jukebox_map_tag_button`. Done!
 
-1.  **Scan the new RFID tag.** The `sensor.rfid_jukebox_last_tag` entity will update to show its ID.
-2.  **Type the exact name** of the desired Music Assistant playlist into the `text.rfid_jukebox_playlist_to_map` field on your dashboard.
-3.  **Press the `Map Scanned Tag` button.** The integration will save the mapping, and the tag is ready to use.
+---
 
-## 🔧 Services
+## 🎚️ Music Assistant basics used here
 
-The integration provides services for advanced control and automation:
+We play **folders** by calling:
 
--   **`rfid_jukebox.map_tag`**: (Advanced) Allows mapping a tag via an automation or script. Accepts `tag_id` and `playlist_name`. The UI button calls this service internally.
--   **`rfid_jukebox.reload_mappings`**: Manually reloads the tag-to-playlist mappings from the YAML file without restarting Home Assistant.
+```yaml
+service: music_assistant.play_media
+data:
+  entity_id: media_player.YOUR_MA_PLAYER
+  media_type: folder
+  media_id: <filesystem_id>://folder/<folder_name>
+```
 
-## TODO
-- Automatically reload tag mapping
-- Make sure that tags can be edited/remaped (removing is not relevant)
-- Fix the TTS playback, does not seem to work
-- Text in the config flow is not in strings
+Tip: you can discover `<filesystem_id>` in Music Assistant (UI/logs), e.g. `filesystem_local--tkx9ahNv`.
 
-## ESPHome Firmware
+---
 
-Below is a complete, working ESPHome configuration that you can use as a starting point for your own RFID jukebox. This firmware is designed to work with the `rfid_jukebox` custom integration and provides physical controls for playback.
+## 🅰️ Option 1 — HA-centric (Custom Integration) ✅
 
-### Features
+**Folder:** `homeassistant/custom_components/rfid_jukebox`  
+**Firmware:** `esphome/jukebox.yaml` (basic: tag + buttons/encoder)
 
-*   **RFID Reader**: Uses a PN532 I2C RFID reader to scan tags.
-*   **Physical Buttons**: Provides buttons for previous track, play/pause, and next track.
-*   **Rotary Encoder**: Allows for volume control by turning the knob and toggles play/pause by pressing it.
-*   **Direct Media Player Control**: Interacts directly with a specified Home Assistant `media_player` entity.
-*   **Configurable**: The target `media_player` entity can be easily changed in one place.
+What it does:
+- ESPHome publishes the tag to HA (`text_sensor`) and can emit HA events.
+- The integration maintains the **tag → folder** mapping and calls Music Assistant.
 
-### Alternative
+**Integration UI entities:**
+- `sensor.rfid_jukebox_last_tag` — last scanned UID
+- `text.rfid_jukebox_playlist_to_map` — enter exact MA folder
+- `button.rfid_jukebox_map_tag_button` — save mapping
 
-It should be possible to flash the Louder-ESP32S3 with [the yaml provided by Sonocotta](https://github.com/sonocotta/esp32-audio-dock/blob/main/firmware/esphome/louder-esp32-s3-idf.yaml) , with the extra extra sensors / devices added by the configuraiton provided in this repository. However, take into account that: 
-- The Louder-ESP32S3 is not designed to make it easy to add two switches, one knob and the I2C based PN532. Therefore you need to figure out the pinout and solder in the tespoints. 
-- You lose some of the features provided by Squeezelite-ESP32. 
+**Why this path:**
+- Clean separation of concerns
+- Easy to edit/backup/share mappings (HA backups, versioning)
+- Scales to multiple readers/rooms
 
-However, it could lead to a cleaner hardware setup and **maybe** a faster start-up time, although I have not tested how fast the esphome is available. In any case, let me know if you try this! 
+---
 
+## 🅱️ Option 2 — ESPHome-centric “AIO” (Advanced)
 
-## Out of scope  for the project
+**File:** `esphome/jukebox-aio.yaml`
 
-At least, for now: 
--   **Control Tags**: Special tags for actions (Volume, skip, toggle). 
--   **Different RFID tag behavior**: Keeping the tag readable is the easiest, most intuitive and simplest to implement way of interacting with the jukebox. 
--   
+What it adds (on top of the basic YAML):
+- **On-device mapping in NVS:** each tag (normalized UID) stores a folder string (`char[64]` by default; bump to 128 if you use long names).
+- **Direct Music Assistant call** from ESPHome (builds `<fs>://folder/<name>`).
+- **Resume vs start:** same tag → `media_player.play`, different tag → play new folder.
+- **ESPHome UI:** `text.rfid_folder_to_map` + `button.map_current_tag → folder`.
 
-Disclaimer: Mostly vibe coded. 
+**Getting started:**
+1. Set `ma_filesystem`, `ma_entity`, and pins under `substitutions`.
+2. Compile & flash with ESPHome.  
+   *Note:* `ma_entity` is your MA player entity in HA. If you don’t know it yet, flash once to bring up the player, then update `ma_entity` and re-flash.
+3. In the device page, set **RFID Folder to Map**, scan a tag, press **Map Current Tag → Folder**.
+4. Scan mapped tags to play.
+
+**When to use this:**
+- You want device-level mapping and the smallest perceived latency.
+- You’re fine managing mappings per device instead of centrally in HA.
+
+---
+
+## 🤔 Which one should I choose?
+
+- **Choose HA-centric (Integration)** if you want the **simplest, most maintainable** setup, clean UI, and easy backups.  
+- **Choose AIO** only if you specifically want **on-device mapping** and are comfortable with more ESPHome logic.
+
+You can switch later—both target the same Music Assistant player.
+
+---
+
+## 🛠️ Troubleshooting
+
+- **Works from Dev Tools, not on scan**  
+  - Confirm `entity_id` is your **MA player**.  
+  - Check logs for the `media_id` you’re calling: it must look like `<fs>://folder/<name>` and the folder must exist in MA.  
+  - If using AIO, increase PN532 `update_interval` slightly (e.g. 400–700 ms) to avoid blocking HA calls during reads.
+
+- **Same tag restarts instead of resuming**  
+  - In AIO, ensure you update the “previous UID” **after** taking the action.
+
+- **Mapping not found**  
+  - AIO: map **after** scanning; avoid leading `/`; increase NVS buffer 64→128 for long names.  
+  - Integration: check for **exact** match of the MA folder name.
+
+---
+
+## 🗺️ Roadmap
+
+- Choose between **folders and playlists** (playlists unlock more sources in Music Assistant)
+- Improve reliability and startup behavior
+- Test with **snapclient** (once stable in ESPHome)
+
+---
+
+## 🤝 Contributing
+
+PRs and issues welcome! Add support for other boards/readers, improve the mapping UX, docs, or reliability.
+
+---
+
+## 🙏 Acknowledgements
+
+- [ESPHome](https://esphome.io/)
+- [Music Assistant](https://music-assistant.io/)
+- Sonocotta’s Louder-ESP32S3 & TAS5805M component
+- Everyone building kid-friendly players and sharing their tricks 💿🧸
