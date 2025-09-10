@@ -11,6 +11,8 @@ substitutions:
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
 
+  ma_entity: media_player.jukebox_pau_louder_mediaplayer_2 # CHANGE THIS
+ 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -91,11 +93,6 @@ external_components:
 globals:
   - id: current_volume
     type: float
-  - id: tag_present
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
 i2c:
   sda: GPIO8
   scl: GPIO9
@@ -349,7 +346,7 @@ binary_sensor:
       - homeassistant.action:
           action: media_player.media_previous_track
           data:
-            entity_id: media_player.louder_mediaplayer
+            entity_id: ${ma_entity}
 
   - platform: gpio
     name: "${friendly_name} Next Button"
@@ -364,7 +361,7 @@ binary_sensor:
       - homeassistant.action:
           action: media_player.media_next_track
           data:
-            entity_id: media_player.louder_mediaplayer
+            entity_id: ${ma_entity}
 
 
 ### Send DAC to shutdown mode after 2 minutes of inactivity
@@ -416,88 +413,13 @@ pn532_spi:
 
   on_tag:
     then:
-      - if:
-          condition:
-            lambda: 'return !id(tag_present);'
-          then:
-            - lambda: |-
-                id(tag_present) = true;
-                id(rfid_tag_uid).publish_state(x);
-            - homeassistant.event:
-                event: esphome.rfid_tag
-                data:
-                  uid: !lambda |-
-                    // Make UID UPPERCASE and remove colons
-                    std::string uid = x;
-                    for (size_t i = 0; i < uid.size(); ++i) {
-                      if (uid[i] == ':') { uid.erase(i, 1); --i; }
-                      else { uid[i] = ::toupper((unsigned char)uid[i]); }
-                    }
-                    return uid;
+      - text_sensor.template.publish:
+          id: rfid_tag_uid
+          state: !lambda 'return x;'
 
   on_tag_removed:
     then:
-      - if:
-          condition:
-            lambda: 'return id(tag_present) == false;'
-          then:
-            # Already handled — do nothing
-          else:
-            - lambda: |-
-                id(tag_present) = false;
-                id(rfid_tag_uid).publish_state("Unknown");
-            - homeassistant.event:
-                event: esphome.rfid_tag_removed
+      - text_sensor.template.publish:
+          id: rfid_tag_uid
+          state: "Unknown"
 
-
-
-
-
-
-script:
-  - id: handle_tag_change
-    mode: restart
-    then:
-      # 1) Normalize tag and resolve mapping
-      - lambda: |-
-          std::string tag = id(rfid_tag_uid).state.c_str();
-          if (tag.empty() || tag == "Unknown") {
-            id(rfid_mapped_folder).publish_state("");
-            ESP_LOGI("rfid","handle_tag_change: tag cleared");
-            return;
-          }
-          // remove colons + uppercase (if your keys are stored like this)
-          tag.erase(std::remove(tag.begin(), tag.end(), ':'), tag.end());
-          for (auto &c : tag) c = ::toupper((unsigned char)c);
-
-          const std::string kv = id(tag_map_kv);        // "TAG=folder;TAG2=folder2;..."
-          const std::string key = tag + "=";
-          const size_t pos = kv.find(key);
-          if (pos == std::string::npos) {
-            id(rfid_mapped_folder).publish_state("");
-            ESP_LOGI("rfid","handle_tag_change: %s unmapped", tag.c_str());
-            return;
-          }
-          size_t vs = pos + key.length();
-          size_t ve = kv.find(';', vs);
-          std::string folder = (ve == std::string::npos) ? kv.substr(vs) : kv.substr(vs, ve - vs);
-          while (!folder.empty() && (folder.front() == '/' || folder.front() == '\\')) folder.erase(0,1);
-          for (auto &c : folder) if (c == '\\') c = '/';
-
-          id(rfid_mapped_folder).publish_state(folder.c_str());
-          ESP_LOGI("rfid","handle_tag_change: %s -> '%s'", tag.c_str(), folder.c_str());
-
-      # 2) OPTIONAL: directly call Music Assistant (can be flaky while tag is held)
-      - if:
-          condition:
-            lambda: 'return id(rfid_mapped_folder).state.size() > 0;'
-          then:
-            - delay: 250ms   # yield so HA can process the sensor update
-            - homeassistant.action:
-                action: music_assistant.play_media
-                data:
-                  entity_id: ${ma_entity}   # MUST be the MA player entity
-                  media_type: folder
-                  enqueue: replace
-                  media_id: !lambda |-
-                    return std::string("${ma_filesystem}") + "://folder/" + id(rfid_mapped_folder).state.c_str();
