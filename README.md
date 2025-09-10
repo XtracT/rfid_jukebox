@@ -1,6 +1,6 @@
 # 🎵 RFID Jukebox — ESPHome + Music Assistant + Home Assistant
 
-A dead-simple, kid-proof jukebox you can build with an ESP32, a PN532 RFID reader, and Music Assistant.  
+A dead-simple, kid-proof jukebox you can build with an ESP32, a PN532 RFID reader, and Music Assistant.
 This repo focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
 
 You can achieve the same result in two ways. **Recommended is the HA-centric path (easier to manage, fewer moving parts).**  
@@ -49,6 +49,7 @@ The ESPHome-only “AIO” is provided as an advanced option.
 - Select:
   - The **RFID tag sensor** (from ESPHome, e.g. `text_sensor.rfid_jukebox_tag`)
   - Your **Music Assistant player** entity (e.g. `media_player.jukebox_*`)
+  - Your **Music Assistant Filesystem ID** (e.g. `filesystem_local--tkx9ahNv`). This is required for playing folders.
 
 ### 3) Flash the basic ESPHome firmware
 - Use `esphome/jukebox.yaml`.
@@ -101,9 +102,23 @@ What it does:
 - Easy to edit/backup/share mappings (HA backups, versioning)
 - Scales to multiple readers/rooms
 
+**Mapping File (`rfid_mappings.yaml`):**
+
+The integration supports a mapping format that includes aliases and media types.
+
+```yaml
+"01:23:45:67:89:AB":
+  alias: "Kids' Party Mix"
+  type: "playlist"
+  name: "Kids Party Time"
+"CD:EF:01:23:45:67":
+  alias: "Bedtime Stories"
+  type: "folder"
+  name: "audiobooks/stories_for_kids"
+```
 ---
 
-## 🅱️ Option 2 — ESPHome-centric “AIO” (Advanced)
+## 🅱️ Option 2 — ESPHome-centric “AIO” (Just for testing, advanced)
 
 **File:** `esphome/jukebox-aio.yaml`
 
@@ -153,7 +168,6 @@ You can switch later—both target the same Music Assistant player.
 
 ## 🗺️ Roadmap
 
-- Choose between **folders and playlists** (playlists unlock more sources in Music Assistant)
 - Improve reliability and startup behavior
 - Test with **snapclient** (once stable in ESPHome)
 

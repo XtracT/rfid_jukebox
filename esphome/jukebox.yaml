@@ -10,7 +10,6 @@ substitutions:
   encoder_b_pin: GPIO6   # USR-ES1 nINT   (your B/DT)
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
-
   ma_entity: media_player.jukebox_pau_louder_mediaplayer_2 # CHANGE THIS
  
 esphome:
