@@ -53,6 +53,7 @@ class AliasText(TextEntity):
     def __init__(self, jukebox):
         """Initialize the text entity."""
         self._jukebox = jukebox
+        self._jukebox.alias_entity = self
         self._attr_name = "RFID Jukebox Alias"
         self._attr_unique_id = f"{DOMAIN}_alias"
         self._attr_icon = "mdi:label"
@@ -60,5 +61,10 @@ class AliasText(TextEntity):
 
     async def async_set_value(self, value: str) -> None:
         """Change the value of the text entity."""
+        self._attr_native_value = value
+        self.async_write_ha_state()
+
+    def update_value(self, value: str):
+        """Update the value of the text entity from the jukebox."""
         self._attr_native_value = value
         self.async_write_ha_state()

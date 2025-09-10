@@ -58,7 +58,8 @@ class RFIDJukebox:
         self.last_tag = None
         self.current_tag = None
         self.text_entity = None
-        self.playlist_to_map = ""
+        self.alias_entity = None
+        self.media_type_entity = None
         self.last_played_playlist_name = None
 
     async def async_setup(self):
@@ -97,15 +98,32 @@ class RFIDJukebox:
             # Update the 'last_tag' sensor for the UI
             if self.last_tag != new_tag:
                 self.last_tag = new_tag
-                if self.text_entity:
-                    if new_tag in self.mappings:
-                        mapping = self.mappings[new_tag]
-                        if isinstance(mapping, dict):
-                            self.text_entity.update_value(mapping.get("alias", new_tag))
-                        else:
+                if new_tag in self.mappings:
+                    mapping = self.mappings[new_tag]
+                    if isinstance(mapping, dict):
+                        alias = mapping.get("alias", new_tag)
+                        media_type = mapping.get("type", "playlist")
+                        media_name = mapping.get("name", "")
+                        if self.text_entity:
+                            self.text_entity.update_value(media_name)
+                        if self.alias_entity:
+                            self.alias_entity.update_value(alias)
+                        if self.media_type_entity:
+                            self.media_type_entity.update_option(media_type)
+                    else:  # Handle old, simple mapping format
+                        if self.text_entity:
                             self.text_entity.update_value(mapping)
-                    else:
-                        self.text_entity.update_value(new_tag)
+                        if self.alias_entity:
+                            self.alias_entity.update_value(new_tag)
+                        if self.media_type_entity:
+                            self.media_type_entity.update_option("playlist")
+                else:  # Unmapped tag, clear the fields
+                    if self.text_entity:
+                        self.text_entity.update_value("")
+                    if self.alias_entity:
+                        self.alias_entity.update_value("")
+                    if self.media_type_entity:
+                        self.media_type_entity.update_option("playlist")
 
             # If it's the same tag that was just playing, resume.
             if self.current_tag == new_tag:
