@@ -256,6 +256,7 @@ class RFIDJukebox:
         await self.hass.async_add_executor_job(
             save_mappings, self.hass, mapping_file, self.mappings
         )
+        self.current_tag = None  # Clear current tag to force re-evaluation
 
     async def async_map_tag_service(self, service_call):
         """Handle the map_tag service call."""
