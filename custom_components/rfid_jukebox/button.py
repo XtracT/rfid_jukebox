@@ -27,13 +27,18 @@ class MapTagButton(ButtonEntity):
     def __init__(self, jukebox):
         """Initialize the button entity."""
         self._jukebox = jukebox
-        self._attr_name = "Map Scanned Tag to Selected Playlist"
+        self._attr_name = "Map Scanned Tag to Media"
         self._attr_unique_id = f"{DOMAIN}_map_tag_button"
         self._attr_icon = "mdi:tag-plus"
 
     async def async_press(self) -> None:
         """Handle the button press."""
         _LOGGER.debug("Map tag button pressed")
-        playlist_to_map = self._jukebox.playlist_to_map
+
+        # Get values from UI entities
+        media_type = self.hass.states.get(f"select.{DOMAIN}_media_type").state
+        media_name = self.hass.states.get(f"text.{DOMAIN}_media_name_to_map").state
+        alias = self.hass.states.get(f"text.{DOMAIN}_alias").state
         tag_id = self._jukebox.last_tag
-        await self._jukebox.async_map_tag(tag_id, playlist_to_map)
+
+        await self._jukebox.async_map_tag(tag_id, media_type, media_name, alias)

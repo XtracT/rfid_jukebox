@@ -18,28 +18,47 @@ async def async_setup_entry(
 ) -> None:
     """Set up the text platform from a config entry."""
     jukebox = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([PlaylistNameText(jukebox)])
+    async_add_entities([
+        MediaNameText(jukebox),
+        AliasText(jukebox),
+    ])
 
 
-class PlaylistNameText(TextEntity):
-    """Representation of a Text entity for entering a playlist name."""
+class MediaNameText(TextEntity):
+    """Representation of a Text entity for entering a media name."""
 
     def __init__(self, jukebox):
         """Initialize the text entity."""
         self._jukebox = jukebox
-        self._jukebox.text_entity = self  # Register entity with the jukebox instance
-        self._attr_name = "RFID Jukebox Playlist to Map"
-        self._attr_unique_id = f"{DOMAIN}_playlist_to_map"
-        self._attr_icon = "mdi:playlist-edit"
-        self._attr_native_value = self._jukebox.playlist_to_map
+        self._jukebox.text_entity = self
+        self._attr_name = "RFID Jukebox Media Name to Map"
+        self._attr_unique_id = f"{DOMAIN}_media_name_to_map"
+        self._attr_icon = "mdi:music-box"
+        self._attr_native_value = ""
 
     async def async_set_value(self, value: str) -> None:
         """Change the value of the text entity."""
-        self._jukebox.playlist_to_map = value
         self._attr_native_value = value
         self.async_write_ha_state()
 
     def update_value(self, value: str):
         """Update the value of the text entity from the jukebox."""
+        self._attr_native_value = value
+        self.async_write_ha_state()
+
+
+class AliasText(TextEntity):
+    """Representation of a Text entity for entering a media alias."""
+
+    def __init__(self, jukebox):
+        """Initialize the text entity."""
+        self._jukebox = jukebox
+        self._attr_name = "RFID Jukebox Alias"
+        self._attr_unique_id = f"{DOMAIN}_alias"
+        self._attr_icon = "mdi:label"
+        self._attr_native_value = ""
+
+    async def async_set_value(self, value: str) -> None:
+        """Change the value of the text entity."""
         self._attr_native_value = value
         self.async_write_ha_state()

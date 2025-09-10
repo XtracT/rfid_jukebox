@@ -8,8 +8,8 @@ from homeassistant.core import HomeAssistant
 _LOGGER = logging.getLogger(__name__)
 
 
-def load_mappings(hass: HomeAssistant, file_path: str) -> Dict[str, str]:
-    """Load tag-to-playlist mappings from a YAML file."""
+def load_mappings(hass: HomeAssistant, file_path: str) -> Dict[str, Dict[str, str]]:
+    """Load tag mappings from a YAML file."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             mappings = yaml.safe_load(f)
@@ -26,11 +26,11 @@ def load_mappings(hass: HomeAssistant, file_path: str) -> Dict[str, str]:
         return {}
 
 
-def save_mappings(hass: HomeAssistant, file_path: str, mappings: Dict[str, str]) -> None:
-    """Save tag-to-playlist mappings to a YAML file."""
+def save_mappings(hass: HomeAssistant, file_path: str, mappings: Dict[str, Dict[str, str]]) -> None:
+    """Save tag mappings to a YAML file."""
     try:
         with open(file_path, "w", encoding="utf-8") as f:
-            yaml.dump(mappings, f)
+            yaml.dump(mappings, f, default_flow_style=False)
             _LOGGER.info("Saved %d mappings to %s", len(mappings), file_path)
     except Exception as e:
         _LOGGER.error("Error saving mapping file %s: %s", file_path, e)

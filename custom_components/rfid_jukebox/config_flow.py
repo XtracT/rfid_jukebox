@@ -11,6 +11,7 @@ from .const import (
     DOMAIN,
     CONF_TAG_SENSOR,
     CONF_MEDIA_PLAYER,
+    CONF_MA_FILESYSTEM,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_MEDIA_PLAYER): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="media_player"),
                     ),
+                    vol.Optional(CONF_MA_FILESYSTEM): str,
                 }
             ),
             errors=errors,
@@ -79,6 +81,10 @@ class RFIDJukeboxOptionsFlowHandler(config_entries.OptionsFlow):
                     ): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="media_player"),
                     ),
+                    vol.Optional(
+                        CONF_MA_FILESYSTEM,
+                        default=self.config_entry.data.get(CONF_MA_FILESYSTEM),
+                    ): str,
                 }
             ),
             errors=errors,

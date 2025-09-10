@@ -57,7 +57,9 @@ The ESPHome-only “AIO” is provided as an advanced option.
 
 ### 4) Map tags from the HA UI
 - Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
-- Enter the **exact** MA folder name in `text.rfid_jukebox_playlist_to_map`.
+- Select the media type (`playlist` or `folder`).
+- Enter the media name (e.g., "Kids Party Time" or "audiobooks/stories_for_kids").
+- Optionally, enter an alias for the tag.
 - Press `button.rfid_jukebox_map_tag_button`. Done!
 
 ---
@@ -89,8 +91,10 @@ What it does:
 
 **Integration UI entities:**
 - `sensor.rfid_jukebox_last_tag` — last scanned UID
-- `text.rfid_jukebox_playlist_to_map` — enter exact MA folder
-- `button.rfid_jukebox_map_tag_button` — save mapping
+- `select.rfid_jukebox_media_type` — choose between `playlist` and `folder`
+- `text.rfid_jukebox_media_name_to_map` — enter the name of the media
+- `text.rfid_jukebox_alias` — optionally, provide a friendly name for the tag
+- `button.rfid_jukebox_map_tag_button` — save the mapping
 
 **Why this path:**
 - Clean separation of concerns
