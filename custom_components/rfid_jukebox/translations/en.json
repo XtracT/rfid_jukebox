@@ -1,0 +1,28 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "RFID Jukebox",
+                "description": "Please configure the RFID Jukebox.",
+                "data": {
+                    "tag_sensor": "Tag Sensor",
+                    "media_player": "Media Player",
+                    "ma_filesystem": "Music Assistant Filesystem Path"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "RFID Jukebox Options",
+                "description": "Update the configuration for the RFID Jukebox.",
+                "data": {
+                    "tag_sensor": "Tag Sensor",
+                    "media_player": "Media Player",
+                    "ma_filesystem": "Music Assistant Filesystem Path"
+                }
+            }
+        }
+    }
+}

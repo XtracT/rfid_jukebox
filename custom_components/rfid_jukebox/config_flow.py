@@ -43,6 +43,7 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+            description_placeholders=None,
         )
 
     @staticmethod
@@ -88,4 +89,5 @@ class RFIDJukeboxOptionsFlowHandler(config_entries.OptionsFlow):
                 }
             ),
             errors=errors,
+            description_placeholders=None,
         )
