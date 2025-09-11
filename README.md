@@ -1,19 +1,11 @@
-# 🎵 RFID Jukebox — ESPHome + Music Assistant + Home Assistant
+# 🎵 RFID Jukebox / Phoniebox — Based on Home Assistant, ESPHome and Music Assistant 
 
 <p align="center">
   <img src="owlbox.png" alt="Jukebox" width="320">
 </p>
 
-A simple, kid-proof jukebox you can build with an ESP32 based DAC amplifier, a PN532 RFID reader, and Music Assistant.
-This repo focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
-
-You can achieve the same result in two ways. **Recommended is the HA-centric path (easier to manage, fewer moving parts).**  
-The ESPHome-only “AIO” is provided as an advanced option.
-
-- **Option 1 — Home Assistant-centric (Recommended):**  
-  ESPHome only reports the tag. A custom **HA integration** (HACS install) keeps the mapping and fires the Music Assistant call. Best for lots of tags, central tag mapping, backups, and multi-room.
-- **Option 2 — ESPHome-centric “AIO” (Advanced):**  
-  Tag → folder mapping is stored **on the device** (ESP-NVS). The ESP32 calls `music_assistant.play_media` directly. Lowest latency, but more firmware logic and less convenient mapping/backup.
+A simple, kid-proof jukebox you can build with an ESP32 based DAC amplifier, a PN532 RFID reader, and a pair of speakers. 
+This build focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
 
 ---
 
@@ -23,7 +15,7 @@ The ESPHome-only “AIO” is provided as an advanced option.
 - **Remove tag → music pauses**
 - **Present the same tag → music resumes**, **new tag → start playing new mediar**
 - **Rotary encoder** for volume, **buttons** for prev/next
-- Two approaches (HA-centric vs device-centric)
+- Two approaches (HA-centric vs esp32-centric)
 
 ---
 
@@ -41,7 +33,7 @@ The ESPHome-only “AIO” is provided as an advanced option.
 
 ---
 
-## 🚀 Quick Start (Recommended HA-centric path)
+## 🚀 Quick Start 
 
 ### 1) Flash the basic ESPHome firmware
 - Use `esphome/jukebox.yaml`.
@@ -129,28 +121,20 @@ What it adds (on top of the basic YAML):
 **When to use this:**
 - You want device-level mapping and the smallest perceived latency.
 - You’re fine managing mappings per device instead of centrally in HA.
-
----
-
-## 🤔 Which one should I choose?
-
-- **Choose HA-centric (Integration)** if you want the **simplest, most maintainable** setup, clean UI, and easy backups.  
-- **Choose AIO** only if you specifically want **on-device mapping** and are comfortable with more ESPHome logic.
-
-You can switch later; both target the same Music Assistant player.
+- You are bored. 
 
 ---
 
 ## 🗺️ Roadmap
 
 - Improve reliability and startup behavior
-- Test with **snapclient** (once stable in ESPHome)
+- Test with **snapclient** 
 
 ---
 
 ## 🤝 Contributing
 
-PRs and issues welcome! Add support for other boards/readers, improve the mapping UX, docs, or reliability.
+PRs and issues welcome! Add support for other boards/readers, improve playback, docs, or reliability.
 
 ---
 
