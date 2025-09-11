@@ -1,6 +1,8 @@
 # 🎵 RFID Jukebox — ESPHome + Music Assistant + Home Assistant
 
-![Jukebox](owlbox.png)
+<p align="center">
+  <img src="owlbox.png" alt="Jukebox" width="320">
+</p>
 
 A simple, kid-proof jukebox you can build with an ESP32 based DAC amplifier, a PN532 RFID reader, and Music Assistant.
 This repo focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
