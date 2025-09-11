@@ -1,4 +1,4 @@
-# 🎵 RFID Jukebox / Phoniebox — Based on Home Assistant, ESPHome and Music Assistant 
+# 🎵 Owlbox ( RFID Jukebox / Phoniebox )
 
 <p align="center">
   <img src="owlbox.png" alt="Jukebox" width="320">
@@ -13,23 +13,24 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
 
 - **Present a tag → music starts** (Music Assistant folder or playlist)
 - **Remove tag → music pauses**
-- **Present the same tag → music resumes**, **new tag → start playing new mediar**
+- **Present the same tag → music resumes**, **new tag → start playing new media**
 - **Rotary encoder** for volume, **buttons** for prev/next
-- Two approaches (HA-centric vs esp32-centric)
+- Fully controllable / scriptable from Home Assistant
+- You can also use it as a wifi speaker!
 
 ---
 
-## 🧱 Hardware (tested)
+## 🧱 Owlbox Hardware
 
 - [Louder-ESP32S3](https://sonocotta.com/louder-esp32/) (from Sonocotta, highly recommended!)
-- PN532 RFID reader (**SPI** tested; **I²C** likely fine but **not tested** here)  
-- Rotary encoder (e.g., Keyestudio 040)  
-- 2× momentary buttons  
+    - Pinouts in the sample YAMLs target Louder-ESP32S3 + PN532 (SPI). Adjust as needed.
+- PN532 RFID reader (**SPI** recommended)
+    - I²C hasn’t been tested here to avoid interfering with the DAC interface.
+- Rotary encoder (e.g., Keyestudio 040)
+- 2× momentary buttons
 - Passive speakers + 5V/3A power (enough for a kid!)
-- Optional 3D-printed enclosure (files/link coming soon)
-
-> Pinouts in the sample YAMLs target Louder-ESP32S3 + PN532 (SPI). Adjust as needed.  
-> I²C hasn’t been tested here to avoid interfering with the DAC interface.
+- Optional: [3D-printed enclosure](https://cad.onshape.com/documents/78662029fc80bc08539751b5/w/59edab3c32cb7d14236cc289/e/d4c3c14dfc96f5b226eab2fe)
+    - I might end up publishing the enclosure in Makerworld, ping me if you are interested!
 
 ---
 
@@ -51,8 +52,7 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
   - The **RFID tag sensor** (from ESPHome, e.g. `text_sensor.rfid_jukebox_tag`)
   - Your **Music Assistant player** entity (e.g. `media_player.jukebox_*`)
   - Your **Music Assistant Filesystem ID** (e.g. `filesystem_local--tkx9ahNv`). This is required for playing folders.
-  - Tip: you can discover `<filesystem_id>` in Music Assistant (UI/logs), e.g. `filesystem_local--tkx9ahNv`.
-
+  - Tip: you can discover `<filesystem_id>` in Music Assistant UI (top bar), e.g. `filesystem_local--tkx9ahNv`.
 
 ### 4) Map tags from the HA UI
 - Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
@@ -61,10 +61,9 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
 - Optionally, enter an alias for the tag (e.g Snoopy).
 - Press `button.rfid_jukebox_map_tag_button`. Done!
 
-
 ---
 
-## 🅰️ Option 1 — HA-centric (Custom Integration) ✅
+## 🅰️ Option 1 — HA-centric 
 
 **Folder:** `homeassistant/custom_components/rfid_jukebox`  
 **Firmware:** `esphome/jukebox.yaml` (basic: tag + buttons/encoder)
