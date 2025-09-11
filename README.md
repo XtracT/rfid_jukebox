@@ -1,6 +1,8 @@
 # 🎵 RFID Jukebox — ESPHome + Music Assistant + Home Assistant
 
-A dead-simple, kid-proof jukebox you can build with an ESP32, a PN532 RFID reader, and Music Assistant.
+![Jukebox](owlbox.png)
+
+A simple, kid-proof jukebox you can build with an ESP32 based DAC amplifier, a PN532 RFID reader, and Music Assistant.
 This repo focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
 
 You can achieve the same result in two ways. **Recommended is the HA-centric path (easier to manage, fewer moving parts).**  
@@ -15,17 +17,17 @@ The ESPHome-only “AIO” is provided as an advanced option.
 
 ## ✨ Highlights
 
-- **Present a tag → music starts** (Music Assistant folder)
-- **Remove tag → pause**
-- **Hold the same tag → resume**, **new tag → start playing new folder**
+- **Present a tag → music starts** (Music Assistant folder or playlist)
+- **Remove tag → music pauses**
+- **Present the same tag → music resumes**, **new tag → start playing new mediar**
 - **Rotary encoder** for volume, **buttons** for prev/next
-- Two approaches (device-centric vs HA-centric), switchable
+- Two approaches (HA-centric vs device-centric)
 
 ---
 
 ## 🧱 Hardware (tested)
 
-- Louder-ESP32S3 (by Sonocotta, highly recommended!) or any ESP32 with I²S DAC/amp  
+- [Louder-ESP32S3](https://sonocotta.com/louder-esp32/) (from Sonocotta, highly recommended!)
 - PN532 RFID reader (**SPI** tested; **I²C** likely fine but **not tested** here)  
 - Rotary encoder (e.g., Keyestudio 040)  
 - 2× momentary buttons  
@@ -39,45 +41,32 @@ The ESPHome-only “AIO” is provided as an advanced option.
 
 ## 🚀 Quick Start (Recommended HA-centric path)
 
-### 1) Install the integration via HACS
+### 1) Flash the basic ESPHome firmware
+- Use `esphome/jukebox.yaml`.
+- Adjust pins to your wiring.
+- Compile & flash with ESPHome.
+
+### 2) Install the integration via HACS
 - In Home Assistant: **HACS → Integrations → Search “RFID Jukebox” → Install**.  
   If it’s not listed yet, add this repo as a **Custom Repository** (category: *Integration*), then install via HACS.
 - **Restart Home Assistant**.
 
-### 2) Add the integration
+### 3) Add the integration
 - Go to **Settings → Devices & Services → Add Integration → RFID Jukebox**.
 - Select:
   - The **RFID tag sensor** (from ESPHome, e.g. `text_sensor.rfid_jukebox_tag`)
   - Your **Music Assistant player** entity (e.g. `media_player.jukebox_*`)
   - Your **Music Assistant Filesystem ID** (e.g. `filesystem_local--tkx9ahNv`). This is required for playing folders.
+  - Tip: you can discover `<filesystem_id>` in Music Assistant (UI/logs), e.g. `filesystem_local--tkx9ahNv`.
 
-### 3) Flash the basic ESPHome firmware
-- Use `esphome/jukebox.yaml`.
-- Adjust pins to your wiring.
-- Compile & flash with ESPHome.
 
 ### 4) Map tags from the HA UI
 - Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
 - Select the media type (`playlist` or `folder`).
 - Enter the media name (e.g., "Kids Party Time" or "audiobooks/stories_for_kids").
-- Optionally, enter an alias for the tag.
+- Optionally, enter an alias for the tag (e.g Snoopy).
 - Press `button.rfid_jukebox_map_tag_button`. Done!
 
----
-
-## 🎚️ Music Assistant basics used here
-
-We play **folders** by calling:
-
-```yaml
-service: music_assistant.play_media
-data:
-  entity_id: media_player.YOUR_MA_PLAYER
-  media_type: folder
-  media_id: <filesystem_id>://folder/<folder_name>
-```
-
-Tip: you can discover `<filesystem_id>` in Music Assistant (UI/logs), e.g. `filesystem_local--tkx9ahNv`.
 
 ---
 
@@ -146,23 +135,7 @@ What it adds (on top of the basic YAML):
 - **Choose HA-centric (Integration)** if you want the **simplest, most maintainable** setup, clean UI, and easy backups.  
 - **Choose AIO** only if you specifically want **on-device mapping** and are comfortable with more ESPHome logic.
 
-You can switch later—both target the same Music Assistant player.
-
----
-
-## 🛠️ Troubleshooting
-
-- **Works from Dev Tools, not on scan**  
-  - Confirm `entity_id` is your **MA player**.  
-  - Check logs for the `media_id` you’re calling: it must look like `<fs>://folder/<name>` and the folder must exist in MA.  
-  - If using AIO, increase PN532 `update_interval` slightly (e.g. 400–700 ms) to avoid blocking HA calls during reads.
-
-- **Same tag restarts instead of resuming**  
-  - In AIO, ensure you update the “previous UID” **after** taking the action.
-
-- **Mapping not found**  
-  - AIO: map **after** scanning; avoid leading `/`; increase NVS buffer 64→128 for long names.  
-  - Integration: check for **exact** match of the MA folder name.
+You can switch later; both target the same Music Assistant player.
 
 ---
 
@@ -181,6 +154,7 @@ PRs and issues welcome! Add support for other boards/readers, improve the mappin
 
 ## 🙏 Acknowledgements
 
+- [Phoniebox](https://phoniebox.de/index-en.html)
 - [ESPHome](https://esphome.io/)
 - [Music Assistant](https://music-assistant.io/)
 - Sonocotta’s Louder-ESP32S3 & TAS5805M component
