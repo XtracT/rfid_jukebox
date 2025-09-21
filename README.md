@@ -20,6 +20,16 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
 
 ---
 
+## ✨ Features
+
+### Mute Functionality
+
+The jukebox includes a software-based mute feature, perfect for controlling playback times without physical intervention. When muted, the volume is set to 0%, and the rotary encoder is disabled, preventing manual volume changes.
+
+This is ideal for scenarios like nighttime control, where you might want to prevent music from being played. For example, you can create a Home Assistant automation to mute the jukebox from 8 PM to 8 AM, ensuring a quiet environment even if a child tries to start the music.
+
+---
+
 ## 🧱 Owlbox Hardware
 
 - [Louder-ESP32S3](https://sonocotta.com/louder-esp32/) (from Sonocotta, highly recommended!)

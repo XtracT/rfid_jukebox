@@ -11,6 +11,7 @@ substitutions:
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
   ma_entity: media_player.jukebox_pau_louder_mediaplayer_2 # CHANGE THIS
+  default_volume: "0.5"
  
 esphome:
   name: ${name}
@@ -92,6 +93,9 @@ external_components:
 globals:
   - id: current_volume
     type: float
+  - id: pre_mute_volume
+    type: float
+    initial_value: "${default_volume}"
 i2c:
   sda: GPIO8
   scl: GPIO9
@@ -106,7 +110,7 @@ audio_dac:
     dac_mode: BTL       # 'BTL' / Bridge Tied Load - 2Ch Stereo, or 'PBTL' / Parallel Bridge Tied Load - 1Ch Mono (double power)
     mixer_mode: STEREO  # STEREO, STEREO_INVERSE, MONO, LEFT, RIGHT
     analog_gain: -9db   # Startup Gain or Output voltage swing - pick based on the power supply voltage: https://github.com/sonocotta/esp32-tas5805m-dac?tab=readme-ov-file#digital-volume-and-analog-gain
-    volume_max: -6dB    # Max HA volume mapping to Digital Volume control, goes as high as +24dB, but not recommend going much above 0 dB, risking to cause clipping on high volume
+    volume_max: -12dB    # Max HA volume mapping to Digital Volume control, goes as high as +24dB, but not recommend going much above 0 dB, risking to cause clipping on high volume
     volume_min: -60db   # Min HA volume mapping to Digital Volume control, goes as low as -103dB, but prefer to set higher to have a reasonable volume range
     update_interval: 5s # How often fault registers are read and cleared
 
@@ -223,6 +227,20 @@ switch:
     enable_eq:
       name: Enable EQ Control
       restore_mode: RESTORE_DEFAULT_ON
+  - platform: template
+    name: "${friendly_name} Mute"
+    id: mute_switch
+    icon: "mdi:volume-mute"
+    optimistic: true
+    on_turn_on:
+      - lambda: 'id(pre_mute_volume) = id(louder_mediaplayer).volume;'
+      - media_player.volume_set:
+          id: louder_mediaplayer
+          volume: 0.0
+    on_turn_off:
+      - media_player.volume_set:
+          id: louder_mediaplayer
+          volume: !lambda 'return id(pre_mute_volume);'
 
 number:
   # Volume for announcements only
@@ -295,11 +313,19 @@ sensor:
     filters:
       - throttle: 50ms
     on_clockwise:
-      - media_player.volume_up:
-          id: louder_mediaplayer
+      - if:
+          condition:
+            switch.is_off: mute_switch
+          then:
+            - media_player.volume_up:
+                id: louder_mediaplayer
     on_anticlockwise:
-      - media_player.volume_down:
-          id: louder_mediaplayer
+      - if:
+          condition:
+            switch.is_off: mute_switch
+          then:
+            - media_player.volume_down:
+                id: louder_mediaplayer
 
 
 ### Faults registers read directly from TAS5805M
