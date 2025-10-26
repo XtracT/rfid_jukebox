@@ -39,8 +39,7 @@ This is ideal for scenarios like nighttime control, where you might want to prev
 - Rotary encoder (e.g., Keyestudio 040)
 - 2× momentary buttons
 - Passive speakers + 5V/3A power (enough for a kid!)
-- Optional: [3D-printed enclosure](https://cad.onshape.com/documents/78662029fc80bc08539751b5/w/59edab3c32cb7d14236cc289/e/d4c3c14dfc96f5b226eab2fe)
-    - I might end up publishing the enclosure in Makerworld, ping me if you are interested!
+- And if you have a 3D printer: [3D-printed enclosure](https://makerworld.com/en/models/1914879)
 
 ---
 
