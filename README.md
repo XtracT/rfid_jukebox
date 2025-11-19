@@ -15,18 +15,9 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
 - **Remove tag → music pauses**
 - **Present the same tag → music resumes**, **new tag → start playing new media**
 - **Rotary encoder** for volume, **buttons** for prev/next
+- **HA Mute button** to make sure your toddler does not start partying at night.
 - Fully controllable / scriptable from Home Assistant
 - You can also use it as a wifi speaker!
-
----
-
-## ✨ Features
-
-### Mute Functionality
-
-The jukebox includes a software-based mute feature, perfect for controlling playback times without physical intervention. When muted, the volume is set to 0%, and the rotary encoder is disabled, preventing manual volume changes.
-
-This is ideal for scenarios like nighttime control, where you might want to prevent music from being played. For example, you can create a Home Assistant automation to mute the jukebox from 8 PM to 8 AM, ensuring a quiet environment even if a child tries to start the music.
 
 ---
 
@@ -72,14 +63,15 @@ This is ideal for scenarios like nighttime control, where you might want to prev
 
 ---
 
-## 🅰️ Option 1 — HA-centric 
+## Further details
 
-**Folder:** `homeassistant/custom_components/rfid_jukebox`  
-**Firmware:** `esphome/jukebox.yaml` (basic: tag + buttons/encoder)
+**Integration:** `homeassistant/custom_components/rfid_jukebox`  
+**ESPHome Firmware:** `esphome/jukebox.yaml`
 
 What it does:
-- ESPHome publishes the tag to HA (`text_sensor`) and can emit HA events.
+- ESPHome publishes the tag to HA (`text_sensor`).
 - The integration maintains the **tag → folder** mapping and calls Music Assistant.
+- ESPHome starts reproducing your media. 
 
 **Integration UI entities:**
 - `sensor.rfid_jukebox_last_tag` — last scanned UID
@@ -87,11 +79,6 @@ What it does:
 - `text.rfid_jukebox_media_name_to_map` — enter the name of the media
 - `text.rfid_jukebox_alias` — optionally, provide a friendly name for the tag
 - `button.rfid_jukebox_map_tag_button` — save the mapping
-
-**Why this path:**
-- Clean separation of concerns
-- Easy to edit/backup/share mappings (HA backups, versioning)
-- Scales to multiple readers/rooms
 
 **Mapping File (`rfid_mappings.yaml`):**
 
@@ -107,29 +94,11 @@ The integration supports a mapping format that includes aliases and media types.
   type: "folder"
   name: "audiobooks/stories_for_kids"
 ```
----
+This makes it easy to keep track of the tags and mappings. 
 
-## 🅱️ Option 2 — ESPHome-centric “AIO” (Just for testing, advanced)
+**Mute Functionality:**
 
-**File:** `esphome/jukebox-aio.yaml`
-
-What it adds (on top of the basic YAML):
-- **On-device mapping in NVS:** each tag (normalized UID) stores a folder string (`char[64]` by default; bump to 128 if you use long names).
-- **Direct Music Assistant call** from ESPHome (builds `<fs>://folder/<name>`).
-- **Resume vs start:** same tag → `media_player.play`, different tag → play new folder.
-- **ESPHome UI:** `text.rfid_folder_to_map` + `button.map_current_tag → folder`.
-
-**Getting started:**
-1. Set `ma_filesystem`, `ma_entity`, and pins under `substitutions`.
-2. Compile & flash with ESPHome.  
-   *Note:* `ma_entity` is your MA player entity in HA. If you don’t know it yet, flash once to bring up the player, then update `ma_entity` and re-flash.
-3. In the device page, set **RFID Folder to Map**, scan a tag, press **Map Current Tag → Folder**.
-4. Scan mapped tags to play.
-
-**When to use this:**
-- You want device-level mapping and the smallest perceived latency.
-- You’re fine managing mappings per device instead of centrally in HA.
-- You are bored. 
+The firmware includes a software-based mute feature, perfect for controlling playback times without physical intervention. When muted, the volume is set to 0%, and the rotary encoder is disabled, preventing manual volume changes. For example, you can create a Home Assistant automation to mute the jukebox from 8 PM to 8 AM.
 
 ---
 
