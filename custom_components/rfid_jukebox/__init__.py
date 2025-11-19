@@ -1,9 +1,11 @@
 """The RFID Jukebox integration."""
 import logging
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import event
+from homeassistant.const import STATE_IDLE, STATE_OFF, STATE_PAUSED, STATE_PLAYING
+
 
 from .const import (
     DOMAIN,
@@ -125,9 +127,26 @@ class RFIDJukebox:
                     if self.media_type_entity:
                         self.media_type_entity.update_option("playlist")
 
-            # If it's the same tag that was just playing, resume.
+            # If it's the same tag, decide whether to resume or restart.
             if self.current_tag == new_tag:
-                await self.async_resume_playback()
+                media_player_entity_id = self.config[CONF_MEDIA_PLAYER]
+                media_player_state = self.hass.states.get(media_player_entity_id)
+
+                if media_player_state and media_player_state.state == STATE_PAUSED:
+                    await self.async_resume_playback()
+                else:
+                    # If the player is idle, off, or in any other state,
+                    # treat it as a new request to play from the beginning.
+                    _LOGGER.info("Player is not paused, restarting media for tag %s", new_tag)
+                    if new_tag in self.mappings:
+                        mapping = self.mappings[new_tag]
+                        media_type = mapping.get("type", "playlist")
+                        media_name = mapping.get("name")
+                        if media_name:
+                            if media_type == "folder":
+                                await self.async_start_new_folder(media_name)
+                            else:
+                                await self.async_start_new_playlist(media_name)
             # Otherwise, it's a new media.
             else:
                 self.current_tag = new_tag
@@ -152,7 +171,12 @@ class RFIDJukebox:
         # Tag is removed
         else:
             if self.current_tag:
-                await self.async_pause_player()
+                media_player_entity_id = self.config[CONF_MEDIA_PLAYER]
+                media_player_state = self.hass.states.get(media_player_entity_id)
+
+                # Only pause if the player is currently playing
+                if media_player_state and media_player_state.state == STATE_PLAYING:
+                    await self.async_pause_player()
                 # We don't clear current_tag here, so we can resume it later
 
     async def async_start_new_playlist(self, playlist_name: str):
