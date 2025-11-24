@@ -167,7 +167,7 @@ media_player:
     name: Louder Mediaplayer
     id: louder_mediaplayer
     task_stack_in_psram: ${task_stack_in_psram}
-    buffer_size: 1000000 # default is 1000000
+    buffer_size: 40960
     volume_increment: 2%
     volume_initial: 50%
     volume_max: 80%
@@ -182,7 +182,7 @@ media_player:
 
     files:
       id: startup_sync_sound
-      file: https://github.com/mrtoy-me/esphome-tas5805m/raw/main/components/tas5805m/tas5805m_boot_louder.flac
+      file: tas5805m_boot_louder.flac
 
     on_play:
       - if:
