@@ -10,9 +10,9 @@ substitutions:
   encoder_b_pin: GPIO6   # USR-ES1 nINT   (your B/DT)
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
-  ma_entity: media_player.jukebox_pau_louder_mediaplayer_2 # CHANGE THIS
+  ma_entity: media_player.owlbox # CHANGE THIS
   default_volume: "0.5"
- 
+  
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
@@ -96,6 +96,9 @@ globals:
   - id: pre_mute_volume
     type: float
     initial_value: "${default_volume}"
+  - id: tag_present
+    type: bool
+    initial_value: 'false'
 i2c:
   sda: GPIO8
   scl: GPIO9
@@ -164,7 +167,7 @@ media_player:
     name: Louder Mediaplayer
     id: louder_mediaplayer
     task_stack_in_psram: ${task_stack_in_psram}
-    buffer_size: 100000 # default is 1000000
+    buffer_size: 1000000 # default is 1000000
     volume_increment: 2%
     volume_initial: 50%
     volume_max: 80%
@@ -368,10 +371,14 @@ binary_sensor:
       - delayed_on: 20ms
       - delayed_off: 20ms
     on_press:
-      - homeassistant.action:
-          action: media_player.media_previous_track
-          data:
-            entity_id: ${ma_entity}
+      - if:
+          condition:
+            lambda: 'return id(tag_present);'
+          then:
+            - homeassistant.action:
+                action: media_player.media_previous_track
+                data:
+                  entity_id: ${ma_entity}
 
   - platform: gpio
     name: "${friendly_name} Next Button"
@@ -383,10 +390,14 @@ binary_sensor:
       - delayed_on: 20ms
       - delayed_off: 20ms
     on_press:
-      - homeassistant.action:
-          action: media_player.media_next_track
-          data:
-            entity_id: ${ma_entity}
+      - if:
+          condition:
+            lambda: 'return id(tag_present);'
+          then:
+            - homeassistant.action:
+                action: media_player.media_next_track
+                data:
+                  entity_id: ${ma_entity}
 
 
 ### Send DAC to shutdown mode after 2 minutes of inactivity
@@ -438,12 +449,14 @@ pn532_spi:
 
   on_tag:
     then:
+      - lambda: id(tag_present) = true;
       - text_sensor.template.publish:
           id: rfid_tag_uid
           state: !lambda 'return x;'
 
   on_tag_removed:
     then:
+      - lambda: id(tag_present) = false;
       - text_sensor.template.publish:
           id: rfid_tag_uid
           state: "Unknown"
