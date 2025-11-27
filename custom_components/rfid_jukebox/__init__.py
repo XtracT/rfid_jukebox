@@ -125,7 +125,7 @@ class RFIDJukebox:
                     if self.alias_entity:
                         self.alias_entity.update_value("")
                     if self.media_type_entity:
-                        self.media_type_entity.update_option("playlist")
+                        self.media_type_entity.update_option("folder")
 
             # If it's the same tag, decide whether to resume or restart.
             if self.current_tag == new_tag:
