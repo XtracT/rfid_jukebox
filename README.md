@@ -34,25 +34,44 @@ This build focuses on **ESPHome** for device firmware, **Music Assistant** for p
 
 ---
 
-## 🚀 Quick Start 
+## Prerequisites
+
+This integration requires [HACS (Home Assistant Community Store)](https://hacs.xyz/docs/setup/download) to be installed in your Home Assistant instance. If you haven't installed it yet, please follow the official HACS installation guide.
+
+---
+
+## 🚀 Quick Start
 
 ### 1) Flash the basic ESPHome firmware
 - Use `esphome/jukebox.yaml`.
 - Adjust pins to your wiring.
 - Compile & flash with ESPHome.
 
-### 2) Install the integration via HACS
-- In Home Assistant: **HACS → Integrations → Search “RFID Jukebox” → Install**.  
-  If it’s not listed yet, add this repo as a **Custom Repository** (category: *Integration*), then install via HACS.
-- **Restart Home Assistant**.
+### 2) Install the RFID Jukebox integration via HACS
+1.  **Add this repository to HACS:**
+    *   In Home Assistant, go to **HACS > Integrations**.
+    *   Click the three-dot menu in the top right and select **Custom repositories**.
+    *   Paste `https://github.com/XtracT/rfid_jukebox` into the repository field.
+    *   Select the category **Integration**.
+    *   Click **Add**.
 
-### 3) Add the integration
-- Go to **Settings → Devices & Services → Add Integration → RFID Jukebox**.
-- Select:
-  - The **RFID tag sensor** (from ESPHome, e.g. `text_sensor.rfid_jukebox_tag`)
-  - Your **Music Assistant player** entity (e.g. `media_player.jukebox_*`)
-  - Your **Music Assistant Filesystem ID** (e.g. `filesystem_local--tkx9ahNv`). This is required for playing folders.
-  - Tip: you can discover `<filesystem_id>` in Music Assistant UI (top bar), e.g. `filesystem_local--tkx9ahNv`.
+2.  **Install the integration:**
+    *   The RFID Jukebox integration will now be available to install.
+    *   Click **Install**.
+
+3.  **Restart Home Assistant:**
+    *   Restart Home Assistant to load the integration.
+
+### 3) Configure the RFID Jukebox integration
+1.  Go to **Settings > Devices & Services**.
+2.  Click **Add Integration** and search for **RFID Jukebox**.
+3.  Select the integration to begin configuration.
+4.  In the configuration window, you will be prompted to select the following entities:
+    *   **RFID Tag Sensor**: Choose the sensor created by ESPHome that reports the RFID tag UID (e.g., `text_sensor.rfid_jukebox_tag`).
+    *   **Music Assistant Player**: Select the media player entity for your jukebox (e.g., `media_player.jukebox_*`).
+    *   **Music Assistant Filesystem ID**: Enter the ID for your Music Assistant music source (e.g., `filesystem_local--tkx9ahNv`). This is required for playing folders.
+        *   **Tip**: You can find the `<filesystem_id>` in the Music Assistant UI.
+5.  Click **Submit** to save the configuration.
 
 ### 4) Map tags from the HA UI
 - Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
