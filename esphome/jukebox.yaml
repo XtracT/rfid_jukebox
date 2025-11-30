@@ -93,9 +93,6 @@ external_components:
 globals:
   - id: current_volume
     type: float
-  - id: pre_mute_volume
-    type: float
-    initial_value: "${default_volume}"
   - id: tag_present
     type: bool
     initial_value: 'false'
@@ -218,7 +215,6 @@ media_player:
             duration: 1.0s
       - lambda: id(tas5805m_dac).set_volume(id(current_volume));
 
-
 switch:
   - platform: tas5805m
     # Will be operated automatially. When disabled DAC will drow dramatically less power
@@ -230,20 +226,6 @@ switch:
     enable_eq:
       name: Enable EQ Control
       restore_mode: RESTORE_DEFAULT_ON
-  - platform: template
-    name: "${friendly_name} Mute"
-    id: mute_switch
-    icon: "mdi:volume-mute"
-    optimistic: true
-    on_turn_on:
-      - lambda: 'id(pre_mute_volume) = id(louder_mediaplayer).volume;'
-      - media_player.volume_set:
-          id: louder_mediaplayer
-          volume: 0.0
-    on_turn_off:
-      - media_player.volume_set:
-          id: louder_mediaplayer
-          volume: !lambda 'return id(pre_mute_volume);'
 
 number:
   # Volume for announcements only
@@ -318,14 +300,14 @@ sensor:
     on_clockwise:
       - if:
           condition:
-            switch.is_off: mute_switch
+            lambda: 'return !id(louder_mediaplayer).is_muted();'
           then:
             - media_player.volume_up:
                 id: louder_mediaplayer
     on_anticlockwise:
       - if:
           condition:
-            switch.is_off: mute_switch
+            lambda: 'return !id(louder_mediaplayer).is_muted();'
           then:
             - media_player.volume_down:
                 id: louder_mediaplayer
