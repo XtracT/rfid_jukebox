@@ -398,7 +398,22 @@ binary_sensor:
                 action: media_player.media_next_track
                 data:
                   entity_id: ${ma_entity}
-
+                  
+### Add pin to use the built in rotary endcoder button
+  - platform: gpio
+    name: "${friendly_name} Encoder Button"
+    pin:
+      number: GPIO39
+      mode: INPUT_PULLUP
+      inverted: true
+    filters:
+      - delayed_on: 20ms
+      - delayed_off: 20ms
+    on_press:
+      - homeassistant.action:
+          action: media_player.media_play_pause
+          data:
+            entity_id: ${ma_entity}
 
 ### Send DAC to shutdown mode after 2 minutes of inactivity
 # This is to save power, since DAC will draw under 100mA in idle state
