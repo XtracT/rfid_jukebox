@@ -8,6 +8,7 @@ substitutions:
   pn532_cs: GPIO10
   encoder_a_pin: GPIO5   # USR-ES1 nRESET (your A/CLK)
   encoder_b_pin: GPIO6   # USR-ES1 nINT   (your B/DT)
+  encoder_btn: GPIO39
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
   ma_entity: media_player.owlbox # CHANGE THIS
@@ -385,7 +386,7 @@ binary_sensor:
   - platform: gpio
     name: "${friendly_name} Encoder Button"
     pin:
-      number: GPIO39
+      number: ${encoder_btn}
       mode: INPUT_PULLUP
       inverted: true
     filters:
