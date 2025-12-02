@@ -1,107 +1,98 @@
-# 🎵 Owlbox ( RFID Jukebox / Phoniebox )
+# 🎵 Owlbox: A DIY RFID Jukebox
 
 <p align="center">
-  <img src="owlbox.png" alt="Jukebox" width="320">
+  <img src="docs/owlbox.png" alt="Jukebox" width="320">
 </p>
 
-A simple, kid-proof jukebox you can build with an ESP32 based DAC amplifier, a PN532 RFID reader, and a pair of speakers. 
-This build focuses on **ESPHome** for device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration/UI.
+The Owlbox is a simple, kid-proof jukebox powered by an ESP32, a PN532 RFID reader, and a pair of speakers. This project uses **ESPHome** for the device firmware, **Music Assistant** for playback, and **Home Assistant** for orchestration and a user-friendly interface.
 
 ---
 
-## ✨ Highlights
+## ✨ Features
 
-- **Present a tag → music starts** (Music Assistant folder or playlist)
-- **Remove tag → music pauses**
-- **Present the same tag → music resumes**, **new tag → start playing new media**
-- **Rotary encoder** for volume, **buttons** for prev/next
-- **HA Mute button** to make sure your toddler does not start partying at night.
-- Fully controllable / scriptable from Home Assistant
-- You can also use it as a wifi speaker!
-
----
-
-## 🧱 Owlbox Hardware
-
-- [Louder-ESP32S3](https://sonocotta.com/louder-esp32/) (from Sonocotta, highly recommended!)
-    - Pinouts in the sample YAMLs target Louder-ESP32S3 + PN532 (SPI). Adjust as needed.
-- PN532 RFID reader (**SPI** recommended)
-    - I²C hasn’t been tested here to avoid interfering with the DAC interface.
-- Rotary encoder (e.g., Keyestudio 040)
-- 2× momentary buttons
-- Passive speakers + 5V/3A power (enough for a kid!)
-- And if you have a 3D printer: [3D-printed enclosure](https://makerworld.com/en/models/1914879)
+-   **Tap-to-Play:** Present an RFID tag to start playing a Music Assistant folder or playlist.
+-   **Auto-Pause:** Remove the tag, and the music pauses.
+-   **Smart Resume:** Present the same tag to resume, or a new tag to play new media.
+-   **Tactile Controls:** A rotary encoder controls volume, and buttons handle previous/next track.
+-   **Parental Mute:** A Home Assistant mute button ensures quiet time.
+-   **Fully Scriptable:** Controllable from Home Assistant for endless automation possibilities.
+-   **Wi-Fi Speaker:** Can also be used as a standard Wi-Fi speaker.
 
 ---
 
-## Prerequisites
+## 🧱 Hardware & Assembly
 
-This integration requires [HACS (Home Assistant Community Store)](https://hacs.xyz/docs/setup/download) to be installed in your Home Assistant instance. If you haven't installed it yet, please follow the official HACS installation guide.
+For detailed hardware, assembly, and 3D printing instructions, please see the **[Hardware Manual](docs/manual.md)**.
+
+The core components are:
+-   [Louder-ESP32S3](https://sonocotta.com/louder-esp32/)
+-   PN532 RFID reader (SPI recommended)
+-   Rotary encoder (e.g., Keyestudio 040)
+-   2× momentary buttons
+-   Passive speakers + 5V/3A power supply
+-   [3D-printed enclosure](https://makerworld.com/en/models/1914879)
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Software Setup Guide
 
-### 1) Flash the basic ESPHome firmware
-- Use `esphome/jukebox.yaml`.
-- Adjust pins to your wiring.
-- Compile & flash with ESPHome.
+### Prerequisites
 
-### 2) Install the RFID Jukebox integration via HACS
-1.  **Add this repository to HACS:**
+This integration requires [HACS (Home Assistant Community Store)](https://hacs.xyz/docs/setup/download) to be installed in your Home Assistant instance.
+
+### Step 1: Flash the ESPHome Firmware
+
+1.  Use the provided `esphome/jukebox.yaml` file.
+2.  Adjust the pin configuration in the YAML to match your wiring.
+3.  Compile and flash the firmware to your ESP32 using ESPHome.
+
+### Step 2: Install the RFID Jukebox Integration
+
+1.  **Add the Custom Repository in HACS:**
     *   In Home Assistant, go to **HACS > Integrations**.
-    *   Click the three-dot menu in the top right and select **Custom repositories**.
-    *   Paste `https://github.com/XtracT/rfid_jukebox` into the repository field.
-    *   Select the category **Integration**.
+    *   Click the three-dot menu and select **Custom repositories**.
+    *   **Repository:** `https://github.com/XtracT/rfid_jukebox`
+    *   **Category:** `Integration`
     *   Click **Add**.
+2.  **Install the Integration:**
+    *   Find the **RFID Jukebox** integration in HACS and click **Install**.
+3.  **Restart Home Assistant** to load the integration.
 
-2.  **Install the integration:**
-    *   The RFID Jukebox integration will now be available to install.
-    *   Click **Install**.
+### Step 3: Configure the Integration
 
-3.  **Restart Home Assistant:**
-    *   Restart Home Assistant to load the integration.
-
-### 3) Configure the RFID Jukebox integration
 1.  Go to **Settings > Devices & Services**.
 2.  Click **Add Integration** and search for **RFID Jukebox**.
-3.  Select the integration to begin configuration.
-4.  In the configuration window, you will be prompted to select the following entities:
-    *   **RFID Tag Sensor**: Choose the sensor created by ESPHome that reports the RFID tag UID (e.g., `text_sensor.rfid_jukebox_tag`).
-    *   **Music Assistant Player**: Select the media player entity for your jukebox (e.g., `media_player.jukebox_*`).
-    *   **Music Assistant Filesystem ID**: Enter the ID for your Music Assistant music source (e.g., `filesystem_local--tkx9ahNv`). This is required for playing folders.
-        *   **Tip**: You can find the `<filesystem_id>` in the Music Assistant UI.
-5.  Click **Submit** to save the configuration.
+3.  In the configuration window, select the following entities:
+    *   **RFID Tag Sensor**: The sensor created by ESPHome that reports the RFID tag UID (e.g., `text_sensor.rfid_jukebox_tag`).
+    *   **Music Assistant Player**: The media player entity for your jukebox (e.g., `media_player.jukebox_*`).
+    *   **Music Assistant Filesystem ID**: The ID for your Music Assistant music source (e.g., `filesystem_local--tkx9ahNv`).
+        *   **Tip**: To find this, set up a "local disk" music provider in Music Assistant. Then, go to **Browse > Filesystem** in the Music Assistant UI. The ID will be at the top of the page or in the URL.
 
-### 4) Map tags from the HA UI
-- Scan a tag → `sensor.rfid_jukebox_last_tag` updates.
-- Select the media type (`playlist` or `folder`).
-- Enter the media name (e.g., "Kids Party Time" or "audiobooks/stories_for_kids").
-- Optionally, enter an alias for the tag (e.g Snoopy).
-- Press `button.rfid_jukebox_map_tag_button`. Done!
+### Step 4: Map RFID Tags to Media
+
+1.  Scan an RFID tag. The `sensor.rfid_jukebox_last_tag` entity in Home Assistant will update with the tag's UID.
+2.  In the integration's configuration UI, select the media type (`playlist` or `folder`).
+3.  Enter the name of the media (e.g., "Kids Party Time" or "audiobooks/stories_for_kids").
+4.  Optionally, enter a friendly alias for the tag (e.g., "Snoopy").
+5.  Press the **Map Tag** button to save the mapping.
 
 ---
 
-## Further details
+## ⚙️ Advanced Details
 
-**Integration:** `homeassistant/custom_components/rfid_jukebox`  
-**ESPHome Firmware:** `esphome/jukebox.yaml`
+### How It Works
 
-What it does:
-- ESPHome publishes the tag to HA (`text_sensor`).
-- The integration maintains the **tag → folder** mapping and calls Music Assistant.
-- ESPHome starts reproducing your media. 
+1.  **ESPHome** detects an RFID tag and publishes its UID to a `text_sensor` in Home Assistant.
+2.  The **RFID Jukebox integration** maintains a mapping of tag UIDs to media files or playlists.
+3.  When a known tag is detected, the integration calls the appropriate **Music Assistant** service to start playback on the jukebox.
 
-**Integration UI entities:**
-- `sensor.rfid_jukebox_last_tag` — last scanned UID
-- `select.rfid_jukebox_media_type` — choose between `playlist` and `folder`
-- `text.rfid_jukebox_media_name_to_map` — enter the name of the media
-- `text.rfid_jukebox_alias` — optionally, provide a friendly name for the tag
-- `button.rfid_jukebox_map_tag_button` — save the mapping
+### Mute Functionality
 
-**Mapping File (`rfid_mappings.yaml`):**
+The firmware includes a software-based mute feature, perfect for controlling playback times. When muted, the volume is set to 0%, and the rotary encoder is disabled. This can be controlled via a Home Assistant automation (e.g., mute from 8 PM to 8 AM).
 
-The integration supports a mapping format that includes aliases and media types.
+### Mapping File
+
+Tag mappings are stored in `rfid_mappings.yaml` in your Home Assistant configuration directory. You can edit this file manually for advanced configuration.
 
 ```yaml
 "01:23:45:67:89:AB":
@@ -113,31 +104,25 @@ The integration supports a mapping format that includes aliases and media types.
   type: "folder"
   name: "audiobooks/stories_for_kids"
 ```
-This makes it easy to keep track of the tags and mappings. 
-
-**Mute Functionality:**
-
-The firmware includes a software-based mute feature, perfect for controlling playback times without physical intervention. When muted, the volume is set to 0%, and the rotary encoder is disabled, preventing manual volume changes. For example, you can create a Home Assistant automation to mute the jukebox from 8 PM to 8 AM.
 
 ---
 
 ## 🗺️ Roadmap
 
-- Improve reliability and startup behavior
-- Test with **snapclient** 
+-   Improve reliability and startup behavior.
+-   Test with **snapclient**.
 
 ---
 
 ## 🤝 Contributing
 
-PRs and issues welcome! Add support for other boards/readers, improve playback, docs, or reliability.
+PRs and issues are welcome! Feel free to add support for other boards, improve documentation, or enhance playback reliability.
 
 ---
 
 ## 🙏 Acknowledgements
 
-- [Phoniebox](https://phoniebox.de/index-en.html)
-- [ESPHome](https://esphome.io/)
-- [Music Assistant](https://music-assistant.io/)
-- Sonocotta’s Louder-ESP32S3 & TAS5805M component
-- Everyone building kid-friendly players and sharing their tricks 💿🧸
+-   [Phoniebox](https://phoniebox.de/index-en.html)
+-   [ESPHome](https://esphome.io/)
+-   [Music Assistant](https://music-assistant.io/)
+-   Sonocotta’s Louder-ESP32S3 & TAS5805M component
