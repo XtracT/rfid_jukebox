@@ -1,17 +1,17 @@
 substitutions:
   name: rfid-jukebox
-  friendly_name: RFID Jukebox
+  friendly_name: Owlblox 
   task_stack_in_psram: "true" # important to disable this for non-S3 model
-  pn532_sclk: GPIO12
-  pn532_mosi: GPIO11
-  pn532_miso: GPIO13
-  pn532_cs: GPIO10
-  encoder_a_pin: GPIO5   # USR-ES1 nRESET (your A/CLK)
-  encoder_b_pin: GPIO6   # USR-ES1 nINT   (your B/DT)
-  encoder_btn: GPIO39
+  pn532_sclk: GPIO12 # Louder ESP32  - CLK
+  pn532_miso: GPIO13 # Louder ESP32  - MISO
+  pn532_mosi: GPIO11 # Louder ESP32  - MOSI
+  pn532_cs: GPIO10 # Louder ESP32  - MOSI
+  encoder_a_pin: GPIO5   # CLK to Louder ESP32  - RST
+  encoder_b_pin: GPIO6   # CLK to Louder ESP32  - INT
+  encoder_btn: GPIO39 # Louder ESP32 - Labeled Pin 39 in Rev J4, 
   btn_prev_pin: GPIO21   # <- wire this button to GND + this GPIO
   btn_next_pin: GPIO7   # <- wire this button to GND + this GPIO
-  ma_entity: media_player.owlbox # CHANGE THIS
+  ma_entity: media_player.owlbox-ma # CHANGE THIS
   default_volume: "0.5"
   
 esphome:
