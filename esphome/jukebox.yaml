@@ -312,7 +312,9 @@ sensor:
           then:
             - media_player.volume_down:
                 id: louder_mediaplayer
-
+  - platform: wifi_signal
+    name: "${friendly_name} Wifi Signal"
+    update_interval: 60s  # Serves as heartbeat to avoid disconnection to MA
 
 ### Faults registers read directly from TAS5805M
 # TODO: Over Temperature Warning -> reduce volume automatically before it goes into shutdown
