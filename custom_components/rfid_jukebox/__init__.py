@@ -231,11 +231,7 @@ class RFIDJukebox:
                 blocking=True,
             )
         except HomeAssistantError as err:
-            _logger = globals().get("_LOGGER")  # keep it simple for now
-            if _logger:
-                _logger.error("MA folder play failed (%s): %s", media_id, err)
-            else:
-                raise
+            _LOGGER.error("MA folder play failed (%s): %s", media_id, err)
 
     async def async_resume_playback(self):
         """Resume the currently paused media player."""
@@ -291,7 +287,3 @@ class RFIDJukebox:
         await self.async_map_tag(tag_id, media_type, media_name, alias)
 
 
-    async def async_map_tag_from_ui(self):
-        """Map the last scanned tag from the UI."""
-        # This will be updated in a future step to handle the new UI elements.
-        pass
