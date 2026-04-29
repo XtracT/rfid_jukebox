@@ -24,5 +24,29 @@
                 }
             }
         }
+    },
+    "services": {
+        "map_tag": {
+            "name": "Map Tag to Media",
+            "description": "Creates a new mapping between an RFID tag ID and a media item (playlist or folder).",
+            "fields": {
+                "tag_id": {
+                    "name": "Tag ID",
+                    "description": "The unique identifier of the RFID tag."
+                },
+                "media_type": {
+                    "name": "Media Type",
+                    "description": "The type of media to map (playlist or folder)."
+                },
+                "media_name": {
+                    "name": "Media Name",
+                    "description": "The name of the playlist or folder path to map."
+                },
+                "alias": {
+                    "name": "Alias",
+                    "description": "A friendly name for this tag (shown in UI)."
+                }
+            }
+        }
     }
 }

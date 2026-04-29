@@ -1,3 +1,53 @@
 {
-    "title": "RFID Jukebox"
+    "title": "RFID Jukebox",
+    "config": {
+        "step": {
+            "user": {
+                "title": "RFID Jukebox",
+                "description": "Please configure the RFID Jukebox.",
+                "data": {
+                    "tag_sensor": "Tag Sensor",
+                    "media_player": "Media Player",
+                    "ma_filesystem": "Music Assistant Filesystem Path"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "RFID Jukebox Options",
+                "description": "Update the configuration for the RFID Jukebox.",
+                "data": {
+                    "tag_sensor": "Tag Sensor",
+                    "media_player": "Media Player",
+                    "ma_filesystem": "Music Assistant Filesystem Path"
+                }
+            }
+        }
+    },
+    "services": {
+        "map_tag": {
+            "name": "Map Tag to Media",
+            "description": "Creates a new mapping between an RFID tag ID and a media item (playlist or folder).",
+            "fields": {
+                "tag_id": {
+                    "name": "Tag ID",
+                    "description": "The unique identifier of the RFID tag."
+                },
+                "media_type": {
+                    "name": "Media Type",
+                    "description": "The type of media to map (playlist or folder)."
+                },
+                "media_name": {
+                    "name": "Media Name",
+                    "description": "The name of the playlist or folder path to map."
+                },
+                "alias": {
+                    "name": "Alias",
+                    "description": "A friendly name for this tag (shown in UI)."
+                }
+            }
+        }
+    }
 }

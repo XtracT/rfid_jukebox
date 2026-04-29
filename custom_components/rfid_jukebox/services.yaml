@@ -1,8 +1,8 @@
 # Describes the services offered by the RFID Jukebox integration.
 
 map_tag:
-  name: Map Tag to Playlist
-  description: Creates a new mapping between an RFID tag ID and a playlist name.
+  name: Map Tag to Media
+  description: Creates a new mapping between an RFID tag ID and a media item (playlist or folder).
   fields:
     tag_id:
       name: Tag ID
@@ -10,9 +10,25 @@ map_tag:
       required: true
       selector:
         text:
-    playlist_name:
-      name: Playlist Name
-      description: The name of the Music Assistant playlist to map.
+    media_type:
+      name: Media Type
+      description: The type of media to map (playlist or folder).
       required: true
+      default: "playlist"
+      selector:
+        select:
+          options:
+            - "playlist"
+            - "folder"
+    media_name:
+      name: Media Name
+      description: The name of the playlist or folder path to map.
+      required: true
+      selector:
+        text:
+    alias:
+      name: Alias
+      description: A friendly name for this tag (shown in UI).
+      required: false
       selector:
         text:
