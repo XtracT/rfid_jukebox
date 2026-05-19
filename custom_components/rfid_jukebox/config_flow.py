@@ -20,7 +20,6 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for RFID Jukebox."""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Handle the initial step."""

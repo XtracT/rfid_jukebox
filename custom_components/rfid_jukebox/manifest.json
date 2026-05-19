@@ -9,6 +9,5 @@
     "requirements": [],
     "version": "0.1.0",
     "iot_class": "local_push",
-    "config_flow": true,
-    "logo": "/logo.png"
+    "config_flow": true
 }
