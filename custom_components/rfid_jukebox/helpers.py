@@ -1,5 +1,7 @@
 """Helper functions for the RFID Jukebox integration."""
 import logging
+import os
+import tempfile
 from typing import Dict
 
 import yaml
@@ -27,10 +29,15 @@ def load_mappings(hass: HomeAssistant, file_path: str) -> Dict[str, Dict[str, st
 
 
 def save_mappings(hass: HomeAssistant, file_path: str, mappings: Dict[str, Dict[str, str]]) -> None:
-    """Save tag mappings to a YAML file."""
+    """Save tag mappings to a YAML file atomically."""
     try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            yaml.dump(mappings, f, default_flow_style=False)
-            _LOGGER.info("Saved %d mappings to %s", len(mappings), file_path)
-    except Exception as e:
+        dir_name = os.path.dirname(file_path) or "."
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=dir_name, delete=False, suffix=".tmp"
+        ) as tmp_file:
+            yaml.dump(mappings, tmp_file, default_flow_style=False)
+            tmp_path = tmp_file.name
+        os.replace(tmp_path, file_path)
+        _LOGGER.info("Saved %d mappings to %s", len(mappings), file_path)
+    except (OSError, yaml.YAMLError) as e:
         _LOGGER.error("Error saving mapping file %s: %s", file_path, e)
