@@ -35,10 +35,27 @@ class MapTagButton(ButtonEntity):
         """Handle the button press."""
         _LOGGER.debug("Map tag button pressed")
 
-        # Get values from UI entities
-        media_type = self.hass.states.get(f"select.{DOMAIN}_media_type").state
-        media_name = self.hass.states.get(f"text.{DOMAIN}_media_name_to_map").state
-        alias = self.hass.states.get(f"text.{DOMAIN}_alias").state
+        # Get values from UI entities directly (avoid hard-coded entity IDs)
+        if self._jukebox.media_type_entity is None:
+            _LOGGER.warning("Media type entity not ready, cannot map tag")
+            return
+        if self._jukebox.text_entity is None:
+            _LOGGER.warning("Media name entity not ready, cannot map tag")
+            return
+
+        media_type = self._jukebox.media_type_entity.current_option
+        media_name = self._jukebox.text_entity.native_value
+        alias = (
+            self._jukebox.alias_entity.native_value
+            if self._jukebox.alias_entity else None
+        )
         tag_id = self._jukebox.last_tag
+
+        if not tag_id:
+            _LOGGER.warning("No tag has been scanned yet, cannot map")
+            return
+        if not media_name:
+            _LOGGER.warning("Media name is empty, cannot map tag %s", tag_id)
+            return
 
         await self._jukebox.async_map_tag(tag_id, media_type, media_name, alias)

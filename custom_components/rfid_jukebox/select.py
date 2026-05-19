@@ -40,4 +40,4 @@ class MediaTypeSelect(SelectEntity):
     def update_option(self, option: str):
         """Update the selected option from the jukebox."""
         self._attr_current_option = option
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()

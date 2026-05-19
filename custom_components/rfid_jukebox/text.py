@@ -44,7 +44,7 @@ class MediaNameText(TextEntity):
     def update_value(self, value: str):
         """Update the value of the text entity from the jukebox."""
         self._attr_native_value = value
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
 
 class AliasText(TextEntity):
@@ -67,4 +67,4 @@ class AliasText(TextEntity):
     def update_value(self, value: str):
         """Update the value of the text entity from the jukebox."""
         self._attr_native_value = value
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
