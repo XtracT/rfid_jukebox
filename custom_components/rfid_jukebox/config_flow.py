@@ -50,15 +50,16 @@ class RFIDJukeboxConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> config_entries.OptionsFlow:
         """Get the options flow for this handler."""
-        return RFIDJukeboxOptionsFlowHandler(config_entry)
+        return RFIDJukeboxOptionsFlowHandler()
 
 
 class RFIDJukeboxOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle an options flow for RFID Jukebox."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        """No longer needed following 25.12+
+        self.config_entry = config_entry"""
 
     async def async_step_init(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Manage the options."""
